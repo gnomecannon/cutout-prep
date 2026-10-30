@@ -1,0 +1,22 @@
+{
+  "defaults": {
+    "size": 2048,
+    "padding": 48
+  },
+  "images": {
+    "seed-pod.jpg": {
+      "name": "T_SeedPod_01_BaseColor",
+      "rotation_degrees": 180
+    },
+    "transparent-token.png": {
+      "components": "all",
+      "exposure": "none",
+      "shadow_lift": 0,
+      "saturation": 1,
+      "edge_decontaminate": false
+    },
+    "reference-only.jpg": {
+      "skip": true
+    }
+  }
+}

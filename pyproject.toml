@@ -1,0 +1,49 @@
+[build-system]
+requires = ["setuptools>=77,<83"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "cutout-prep"
+version = "0.1.0"
+description = "Local, deterministic preparation of photographed cutouts and transparent artwork for game assets."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "MIT"
+license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
+authors = [{name = "gnomecannon"}]
+keywords = ["image-processing", "game-assets", "cutout", "foliage", "alpha", "raw"]
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Environment :: Console",
+  "Intended Audience :: End Users/Desktop",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Topic :: Multimedia :: Graphics :: Graphics Conversion",
+]
+dependencies = [
+  "Pillow>=10.1,<13",
+  "numpy>=1.26,<3",
+  "opencv-python-headless>=4.8,<6",
+  "scipy>=1.11,<2",
+]
+
+[project.optional-dependencies]
+raw = ["rawpy>=0.27.1,<0.28"]
+dev = ["build>=1.2,<2"]
+
+[project.scripts]
+cutout-prep = "cutout_prep.process_images:main"
+
+[project.urls]
+Homepage = "https://github.com/gnomecannon/cutout-prep"
+Repository = "https://github.com/gnomecannon/cutout-prep"
+Issues = "https://github.com/gnomecannon/cutout-prep/issues"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+cutout_prep = ["sRGB.icc"]
