@@ -92,7 +92,7 @@ def main():
         def fail(self,error):messagebox.showerror('Cutout Prep',str(error),parent=self.root)
         def guide(self):webbrowser.open((resources()/'Guide.html').as_uri())
         def build_scan_menu(self):
-            menu=tk.Menu(self.more_button,tearoff=False);self.more_button.configure(menu=menu)
+            menu=tk.Menu(self.more_button,tearoff=False);self.scan_menu=menu;self.more_button.configure(menu=menu)
             menu.add_command(label='Load selected photos…',command=self.choose_files)
             menu.add_command(label='Load folder and choose save location…',command=lambda:self.choose_folder(True))
             menu.add_command(label='Open saved work…',command=self.open_project)
@@ -127,11 +127,15 @@ def main():
             menu.add_separator();menu.add_command(label='Read the quick guide',command=self.guide)
         def update_controls(self):
             loaded=self.project is not None;idle=not self.busy
+            for label in ['Save progress now','Adjust this selection','Photo display','Process again from this photo','Save ready photos and masks again']:
+                self.scan_menu.entryconfigure(label,state='normal' if loaded and idle else 'disabled')
             self.process_button.configure(state='normal' if loaded and idle else 'disabled')
             ready=loaded and (self.project.root/'Prepared Photos').is_dir()
             self.results_button.configure(state='normal' if ready else 'disabled')
             if hasattr(self,'leaf_run'):
                 self.leaf_run.configure(state='normal' if idle and self.leaf_source.get() else 'disabled')
+                has_results=bool(self.leaf_output.get()) and (Path(self.leaf_output.get())/'ProcessingReport.json').is_file()
+                self.leaf_results_button.configure(state='normal' if has_results else 'disabled')
             if loaded:
                 self.photo_navigation.pack(fill='x')
                 self.review_bar.pack(fill='x',pady=4,before=self.progress)
@@ -371,7 +375,7 @@ def main():
             bar=ttk.Frame(self.leaf_tab);bar.pack(fill='x',pady=6)
             self.leaf_load=ttk.Button(bar,text='Load photo folder…',command=self.choose_leaf_folder);self.leaf_load.pack(side='left',padx=3)
             self.leaf_run=ttk.Button(bar,text='Process cutouts',command=self.run_leaf);self.leaf_run.pack(side='left',padx=3)
-            ttk.Button(bar,text='Show cutout results',command=lambda:self.open_leaf_output()).pack(side='left',padx=3)
+            self.leaf_results_button=ttk.Button(bar,text='Show cutout results',command=self.open_leaf_output);self.leaf_results_button.pack(side='left',padx=3)
             more=ttk.Menubutton(bar,text='More options');more.pack(side='right',padx=3)
             menu=tk.Menu(more,tearoff=False);more.configure(menu=menu)
             menu.add_command(label='Choose a different save folder…',command=self.choose_leaf_output)
@@ -381,6 +385,7 @@ def main():
             menu.add_separator();menu.add_command(label='Read the quick guide',command=self.guide)
             self.job_buttons += [self.leaf_load,self.leaf_run,more]
             self.leaf_source.trace_add('write',lambda *_:self.update_controls())
+            self.leaf_output.trace_add('write',lambda *_:self.update_controls())
             ttk.Label(self.leaf_tab,text='Load a photo folder, then choose Process cutouts. Results save in a new folder beside your photos.',wraplength=900).pack(anchor='w',pady=12,padx=3)
             ttk.Label(self.leaf_tab,text='Photo folder:').pack(anchor='w',padx=3)
             ttk.Label(self.leaf_tab,textvariable=self.leaf_source,wraplength=900).pack(anchor='w',padx=12,pady=(0,12))
