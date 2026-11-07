@@ -37,6 +37,10 @@ def main():
             if app is None or app.busy:root.after(100,tick);return
             n=phase[0];phase[0]+=1
             if n==0:
+                root.geometry('820x600');root.update_idletasks()
+                for button in [app.load_button,app.process_button,app.results_button,app.more_button]:
+                    assert button.winfo_x()>=0 and button.winfo_x()+button.winfo_width()<=button.master.winfo_width()
+                result['primary_controls_fit_minimum_window']=True
                 assert str(app.process_button['state'])=='disabled'
                 with patch.object(filedialog,'askdirectory',return_value=str(photos)) as picker:app.choose_folder()
                 assert picker.call_count==1

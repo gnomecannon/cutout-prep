@@ -72,7 +72,7 @@ def main():
             scroll=ttk.Scrollbar(left,orient='vertical',command=self.tree.yview);scroll.pack(side='right',fill='y');self.tree.configure(yscrollcommand=scroll.set);self.tree.bind('<<TreeviewSelect>>',self.select)
             self.canvas=tk.Canvas(right,bg='#25282d',highlightthickness=0);self.canvas.pack(fill='both',expand=True);self.canvas.bind('<Configure>',lambda e:self.draw());self.canvas.bind('<ButtonPress-1>',self.press);self.canvas.bind('<B1-Motion>',self.drag);self.canvas.bind('<ButtonRelease-1>',self.release)
             foot=ttk.Frame(right);self.photo_navigation=foot;ttk.Button(foot,text='Previous photo',command=lambda:self.navigate(-1)).pack(side='left',pady=4);ttk.Button(foot,text='Next photo',command=lambda:self.navigate(1)).pack(side='left',padx=4)
-            self.detail=tk.StringVar(value='No photo folder loaded.');ttk.Label(self.scan_tab,textvariable=self.detail,wraplength=1000).pack(fill='x')
+            self.detail=tk.StringVar(value='No photo folder loaded.');self.detail_label=ttk.Label(self.scan_tab,textvariable=self.detail,wraplength=1000);self.detail_label.pack(fill='x')
             self.review_bar=ttk.Frame(self.scan_tab)
             self.adjust_button=ttk.Menubutton(self.review_bar,text='Adjust this selection');self.adjust_button.configure(menu=self.selection_menu)
             self.review_button=ttk.Button(self.review_bar,text='Find photos needing review',command=self.next_review)
@@ -81,9 +81,10 @@ def main():
             self.job_buttons += [self.adjust_button,self.review_button,self.approve_button,self.exclude_button]
             self.cancel_button=ttk.Button(self.review_bar,text='Stop after current photo',command=self.cancel.set,state='disabled')
             self.progress=ttk.Progressbar(self.scan_tab,mode='determinate');self.progress.pack(fill='x',pady=2)
-            ttk.Label(root,textvariable=self.status,wraplength=1140).pack(fill='x',padx=12,pady=(0,8))
+            self.status_label=ttk.Label(root,textvariable=self.status,wraplength=1000);self.status_label.pack(fill='x',padx=12,pady=(0,8))
             self.build_leaf_tab(ttk,tk,filedialog,messagebox)
             self.update_controls()
+            root.bind('<Configure>',lambda event:self.fit_text() if event.widget==root else None)
             root.protocol('WM_DELETE_WINDOW',self.close);root.bind('<Control-z>',lambda e:self.undo())
             if sys.platform=='darwin':root.bind('<Command-z>',lambda e:self.undo())
             root.after(150,self.poll)
@@ -91,6 +92,10 @@ def main():
             if args.smoke:root.after(1000,lambda:self.status.set('UI smoke check ready.'))
         def fail(self,error):messagebox.showerror('Cutout Prep',str(error),parent=self.root)
         def guide(self):webbrowser.open((resources()/'Guide.html').as_uri())
+        def fit_text(self):
+            width=max(400,self.root.winfo_width()-40)
+            for label in [self.mode_hint,self.detail_label,self.status_label,*self.leaf_tab.winfo_children()]:
+                if isinstance(label,ttk.Label):label.configure(wraplength=width)
         def build_scan_menu(self):
             menu=tk.Menu(self.more_button,tearoff=False);self.scan_menu=menu;self.more_button.configure(menu=menu)
             menu.add_command(label='Load selected photos…',command=self.choose_files)
