@@ -44,51 +44,47 @@ def main():
     import numpy as np
     from PIL import Image,ImageTk
     from cutout_prep import scan_core as core
+    from cutout_prep.desktop_paths import create_results_folder
+    from cutout_prep import __version__
 
     class App:
         def __init__(self,root):
             self.root=root;self.project=None;self.index=0;self.predictor=None;self.photo=None;self.mask=None;self.display=None;self.bounds=(0,0,1,1);self.box_start=None;self.busy=False;self.cancel=threading.Event();self.events=queue.Queue();self.history={};self.child=None
-            root.title('Cutout Prep — Photos & Scan Masks');root.geometry('1180x760');root.minsize(980,620)
-            self.status=tk.StringVar(value='Choose photos or a folder, then choose a project folder. Originals stay untouched.')
+            root.title(f'Cutout Prep {__version__}');root.geometry('1080x740');root.minsize(820,600)
+            self.status=tk.StringVar(value='Load a photo folder to begin. Your original photos stay untouched.')
             self.mode=tk.StringVar(value='object');self.tool=tk.StringVar(value='box');self.view=tk.StringVar(value='overlay');self.margin=tk.IntVar(value=0);self.allow_border=tk.BooleanVar(value=False)
+            self.new_mode=tk.StringVar(value='object')
             style=ttk.Style();style.theme_use('clam');style.configure('TButton',padding=(9,5));style.configure('TLabel',padding=2)
             notebook=ttk.Notebook(root);notebook.pack(fill='both',expand=True,padx=10,pady=8)
-            self.scan_tab=ttk.Frame(notebook);self.leaf_tab=ttk.Frame(notebook);notebook.add(self.scan_tab,text='Scan masks');notebook.add(self.leaf_tab,text='Leaf & image cutouts')
+            self.scan_tab=ttk.Frame(notebook);self.leaf_tab=ttk.Frame(notebook);notebook.add(self.scan_tab,text='Photos for 3D scanning');notebook.add(self.leaf_tab,text='Leaf & image cutouts')
             top=ttk.Frame(self.scan_tab);top.pack(fill='x')
-            self.job_buttons=[]
-            for text,command in [('Choose photos…',self.choose_files),('Choose folder…',self.choose_folder),('Open project…',self.open_project),('Save',self.save),('Guide',self.guide)]:
-                b=ttk.Button(top,text=text,command=command);b.pack(side='left',padx=3,pady=4)
-                if text not in ['Save','Guide']:self.job_buttons.append(b)
-            options=ttk.Frame(self.scan_tab);options.pack(fill='x',pady=3)
-            ttk.Label(options,text='Workflow:').pack(side='left')
-            for text,value in [('Keep one object / target area','object'),('Keep scene, remove a distraction','scene')]:ttk.Radiobutton(options,text=text,variable=self.mode,value=value,command=self.change_mode).pack(side='left',padx=5)
-            self.mode_hint=ttk.Label(self.scan_tab,text='Draw a box around the rock, leaf, log, or other target. Keep/Remove clicks refine its boundary.')
-            self.mode_hint.pack(fill='x')
-            self.border_check=ttk.Checkbutton(self.scan_tab,text='Target may continue beyond photo edges (cliffs / large surfaces)',variable=self.allow_border,command=self.change_border)
-            self.border_check.pack(anchor='w',padx=3);self.job_buttons.append(self.border_check)
-            tools=ttk.Frame(self.scan_tab);tools.pack(fill='x')
-            for text,value in [('Box','box'),('Keep point','keep'),('Remove point','remove')]:ttk.Radiobutton(tools,text=text,variable=self.tool,value=value).pack(side='left',padx=4)
-            for text,cmd in [('Undo',self.undo),('Clear selection',self.clear),('Preview mask',self.preview),('Approve view',self.approve),('Exclude / include',self.exclude)]:
-                b=ttk.Button(tools,text=text,command=cmd);b.pack(side='left',padx=3)
-                if text=='Preview mask':self.job_buttons.append(b)
-            ttk.Label(tools,text='Edge margin:').pack(side='left',padx=(10,0));ttk.Spinbox(tools,from_=-5,to=5,width=3,textvariable=self.margin,command=self.change_margin).pack(side='left')
+            self.load_button=ttk.Button(top,text='Load photo folder…',command=self.choose_folder);self.load_button.pack(side='left',padx=3,pady=6)
+            self.process_button=ttk.Button(top,text='Process photos',command=self.batch);self.process_button.pack(side='left',padx=3)
+            self.results_button=ttk.Button(top,text='Show results folder',command=self.open_output);self.results_button.pack(side='left',padx=3)
+            self.more_button=ttk.Menubutton(top,text='More options');self.more_button.pack(side='right',padx=3)
+            self.job_buttons=[self.load_button,self.process_button,self.more_button]
+            self.build_scan_menu()
+            self.mode_hint=ttk.Label(self.scan_tab,wraplength=1000)
+            self.mode_hint.pack(fill='x',padx=3,pady=(3,5));self.set_mode_hint()
             panes=ttk.Panedwindow(self.scan_tab,orient='horizontal');panes.pack(fill='both',expand=True,pady=6)
             left=ttk.Frame(panes);right=ttk.Frame(panes);panes.add(left,weight=1);panes.add(right,weight=5)
             self.tree=ttk.Treeview(left,columns=('state',),show='tree headings',selectmode='browse',height=16);self.tree.heading('#0',text='Photograph');self.tree.heading('state',text='Status');self.tree.column('#0',width=175);self.tree.column('state',width=80);self.tree.pack(side='left',fill='both',expand=True)
             scroll=ttk.Scrollbar(left,orient='vertical',command=self.tree.yview);scroll.pack(side='right',fill='y');self.tree.configure(yscrollcommand=scroll.set);self.tree.bind('<<TreeviewSelect>>',self.select)
             self.canvas=tk.Canvas(right,bg='#25282d',highlightthickness=0);self.canvas.pack(fill='both',expand=True);self.canvas.bind('<Configure>',lambda e:self.draw());self.canvas.bind('<ButtonPress-1>',self.press);self.canvas.bind('<B1-Motion>',self.drag);self.canvas.bind('<ButtonRelease-1>',self.release)
-            foot=ttk.Frame(right);foot.pack(fill='x');ttk.Button(foot,text='◀ Previous',command=lambda:self.navigate(-1)).pack(side='left');ttk.Button(foot,text='Next ▶',command=lambda:self.navigate(1)).pack(side='left')
-            for text,value in [('Overlay','overlay'),('Black/white mask','mask'),('Original','original')]:ttk.Radiobutton(foot,text=text,variable=self.view,value=value,command=self.draw).pack(side='left',padx=4)
-            ttk.Button(foot,text='Next review',command=self.next_review).pack(side='right')
-            self.detail=tk.StringVar(value='No project open.');ttk.Label(self.scan_tab,textvariable=self.detail,wraplength=1100).pack(fill='x')
-            bottom=ttk.Frame(self.scan_tab);bottom.pack(fill='x',pady=4)
-            for text,cmd in [('Process group',self.batch),('Process from this view',lambda:self.batch(True)),('Export ready / approved photos',self.export),('Open output folder',self.open_output)]:
-                b=ttk.Button(bottom,text=text,command=cmd);b.pack(side='left',padx=3)
-                if text!='Open output folder':self.job_buttons.append(b)
-            self.cancel_button=ttk.Button(bottom,text='Cancel after this photo',command=self.cancel.set,state='disabled');self.cancel_button.pack(side='right')
+            foot=ttk.Frame(right);self.photo_navigation=foot;ttk.Button(foot,text='Previous photo',command=lambda:self.navigate(-1)).pack(side='left',pady=4);ttk.Button(foot,text='Next photo',command=lambda:self.navigate(1)).pack(side='left',padx=4)
+            self.detail=tk.StringVar(value='No photo folder loaded.');self.detail_label=ttk.Label(self.scan_tab,textvariable=self.detail,wraplength=1000);self.detail_label.pack(fill='x')
+            self.review_bar=ttk.Frame(self.scan_tab)
+            self.adjust_button=ttk.Menubutton(self.review_bar,text='Adjust this selection');self.adjust_button.configure(menu=self.selection_menu)
+            self.review_button=ttk.Button(self.review_bar,text='Find photos needing review',command=self.next_review)
+            self.approve_button=ttk.Button(self.review_bar,text='Use this photo’s result',command=self.approve)
+            self.exclude_button=ttk.Button(self.review_bar,text='Skip this photo',command=self.exclude)
+            self.job_buttons += [self.adjust_button,self.review_button,self.approve_button,self.exclude_button]
+            self.cancel_button=ttk.Button(self.review_bar,text='Stop after current photo',command=self.cancel.set,state='disabled')
             self.progress=ttk.Progressbar(self.scan_tab,mode='determinate');self.progress.pack(fill='x',pady=2)
-            ttk.Label(root,textvariable=self.status,wraplength=1140).pack(fill='x',padx=12,pady=(0,8))
+            self.status_label=ttk.Label(root,textvariable=self.status,wraplength=1000);self.status_label.pack(fill='x',padx=12,pady=(0,8))
             self.build_leaf_tab(ttk,tk,filedialog,messagebox)
+            self.update_controls()
+            root.bind('<Configure>',lambda event:self.fit_text() if event.widget==root else None)
             root.protocol('WM_DELETE_WINDOW',self.close);root.bind('<Control-z>',lambda e:self.undo())
             if sys.platform=='darwin':root.bind('<Command-z>',lambda e:self.undo())
             root.after(150,self.poll)
@@ -96,6 +92,79 @@ def main():
             if args.smoke:root.after(1000,lambda:self.status.set('UI smoke check ready.'))
         def fail(self,error):messagebox.showerror('Cutout Prep',str(error),parent=self.root)
         def guide(self):webbrowser.open((resources()/'Guide.html').as_uri())
+        def fit_text(self):
+            width=max(400,self.root.winfo_width()-40)
+            for label in [self.mode_hint,self.detail_label,self.status_label,*self.leaf_tab.winfo_children()]:
+                if isinstance(label,ttk.Label):label.configure(wraplength=width)
+        def build_scan_menu(self):
+            menu=tk.Menu(self.more_button,tearoff=False);self.scan_menu=menu;self.more_button.configure(menu=menu)
+            menu.add_command(label='Load selected photos…',command=self.choose_files)
+            menu.add_command(label='Load folder and choose save location…',command=lambda:self.choose_folder(True))
+            menu.add_command(label='Open saved work…',command=self.open_project)
+            menu.add_command(label='Save progress now',command=self.save)
+            menu.add_separator()
+            workflow=tk.Menu(menu,tearoff=False)
+            workflow.add_radiobutton(label='Keep one object or surface',variable=self.new_mode,value='object',command=self.set_mode_hint)
+            workflow.add_radiobutton(label='Keep scene; remove selected area',variable=self.new_mode,value='scene',command=self.set_mode_hint)
+            menu.add_cascade(label='For the next photo group',menu=workflow)
+            settings=tk.Menu(menu,tearoff=False)
+            settings.add_checkbutton(label='Subject continues beyond photo edges (cliffs)',variable=self.allow_border,command=self.change_border)
+            border=tk.Menu(settings,tearoff=False)
+            for value in [-5,-3,-1,0,1,3,5]:
+                label='Original outline' if value==0 else f'{"Smaller" if value<0 else "Larger"} selected area ({value:+d})'
+                border.add_radiobutton(label=label,variable=self.margin,value=value,command=self.change_margin)
+            settings.add_cascade(label='Adjust selected area’s outline',menu=border)
+            menu.add_cascade(label='Mask settings',menu=settings)
+            self.selection_menu=tk.Menu(menu,tearoff=False)
+            for label,value in [('Draw a box around the subject','box'),('Click areas to keep','keep'),('Click areas to remove','remove')]:
+                self.selection_menu.add_radiobutton(label=label,variable=self.tool,value=value,command=self.set_mode_hint)
+            self.selection_menu.add_separator()
+            for label,command in [('Undo last selection change',self.undo),('Clear this selection',self.clear),('Preview this photo’s result',self.preview)]:
+                self.selection_menu.add_command(label=label,command=command)
+            menu.add_cascade(label='Adjust this selection',menu=self.selection_menu)
+            view=tk.Menu(menu,tearoff=False)
+            for label,value in [('Highlight the kept area','overlay'),('Show black and white mask','mask'),('Show original photo','original')]:
+                view.add_radiobutton(label=label,variable=self.view,value=value,command=self.draw)
+            view.add_command(label='Show photo details…',command=self.photo_details)
+            menu.add_cascade(label='Photo display',menu=view)
+            menu.add_command(label='Process again from this photo',command=lambda:self.batch(True))
+            menu.add_command(label='Save ready photos and masks again',command=self.export)
+            menu.add_separator();menu.add_command(label='Read the quick guide',command=self.guide)
+        def update_controls(self):
+            loaded=self.project is not None;idle=not self.busy
+            for label in ['Save progress now','Adjust this selection','Photo display','Process again from this photo','Save ready photos and masks again']:
+                self.scan_menu.entryconfigure(label,state='normal' if loaded and idle else 'disabled')
+            self.process_button.configure(state='normal' if loaded and idle else 'disabled')
+            ready=loaded and (self.project.root/'Prepared Photos').is_dir()
+            self.results_button.configure(state='normal' if ready else 'disabled')
+            if hasattr(self,'leaf_run'):
+                self.leaf_run.configure(state='normal' if idle and self.leaf_source.get() else 'disabled')
+                has_results=bool(self.leaf_output.get()) and (Path(self.leaf_output.get())/'ProcessingReport.json').is_file()
+                self.leaf_results_button.configure(state='normal' if has_results else 'disabled')
+            if loaded:
+                self.photo_navigation.pack(fill='x')
+                self.review_bar.pack(fill='x',pady=4,before=self.progress)
+                self.adjust_button.pack(side='left',padx=3)
+                self.exclude_button.pack(side='left',padx=3)
+                self.cancel_button.pack(side='right',padx=3)
+                row=self.row();has_mask=bool(row.get('mask'))
+                if has_mask:
+                    self.approve_button.pack(side='left',padx=3)
+                    self.approve_button.configure(state='normal' if idle and not row.get('excluded') and row['status'] not in ('Selection changed','Error') else 'disabled')
+                else:self.approve_button.pack_forget()
+                count=sum(not r.get('excluded') and r['status'] in ('Review','Error','Selection changed') for r in self.project.data['photos'])
+                if count:
+                    self.review_button.configure(text=f'Review {count} photo{"s" if count!=1 else ""}')
+                    self.review_button.pack(side='left',padx=3)
+                else:self.review_button.pack_forget()
+                self.exclude_button.configure(text='Use this photo again' if row.get('excluded') else 'Skip this photo')
+            else:self.review_bar.pack_forget();self.photo_navigation.pack_forget()
+        def photo_details(self):
+            if not self.project:return
+            row=self.row();score=row.get('score')
+            text=f'{row["name"]}\n{row["size"][0]} × {row["size"][1]} pixels\nStatus: {row["status"]}'
+            if score is not None:text+=f'\nModel score: {score:.2f} (not an accuracy guarantee)'
+            messagebox.showinfo('Photo details',text,parent=self.root)
         def row(self):return self.project.data['photos'][self.index] if self.project else None
         def save(self):
             if self.project:
@@ -108,23 +177,39 @@ def main():
             if self.project:
                 self.project.data['allow_border']=bool(self.allow_border.get());self.project.save()
                 self.status.set('Edge setting saved. Preview or process again to update mask checks; existing approvals are preserved.')
-        def create(self,paths):
+        def create(self,paths,photo_folder=None,choose_location=False):
             if self.busy:return
-            dest=filedialog.askdirectory(title='Choose an empty project/output folder',parent=self.root)
-            if not dest:return
-            try:self.replace_project(core.Project.create(paths,dest,self.mode.get()))
+            paths=list(paths)
+            if not paths:return self.fail('This folder has no supported photos. Choose JPEG, HEIC, PNG or TIFF photographs.')
+            if choose_location:
+                dest=filedialog.askdirectory(title='Choose a separate folder for results and saved work',parent=self.root)
+                if not dest:return
+            else:
+                try:dest=create_results_folder(photo_folder or Path(paths[0]).parent,'Scan Masks')
+                except OSError:
+                    dest=filedialog.askdirectory(title='Choose where to save results; the photo folder’s parent is not writable',parent=self.root)
+                    if not dest:return
+            if Path(dest).resolve() in {Path(p).resolve().parent for p in paths}:
+                return self.fail('Choose a results folder separate from your original photos.')
+            try:
+                if Path(dest).exists() and any(Path(dest).iterdir()):
+                    return self.fail('Choose an empty results folder. To continue previous work, use More options → Open saved work.')
+                project=core.Project.create(paths,dest,self.new_mode.get())
+                project.data.update(allow_border=bool(self.allow_border.get()),margin=int(self.margin.get()));project.save()
+                self.replace_project(project);self.tool.set('box');self.set_mode_hint();self.update_controls()
+                self.status.set(f'Loaded {len(project.data["photos"])} photos. Results will save in “{project.root.name}”. Draw a box around what to {"keep" if self.mode.get()=="object" else "remove"}.')
             except Exception as exc:self.fail(exc)
         def choose_files(self):
             paths=filedialog.askopenfilenames(title='Choose scan photographs',filetypes=[('Photographs','*.jpg *.jpeg *.png *.tif *.tiff *.heic *.heif *.webp *.bmp'),('All files','*')],parent=self.root)
             if paths:self.create(paths)
-        def choose_folder(self):
+        def choose_folder(self,choose_location=False):
             folder=filedialog.askdirectory(title='Choose the folder containing scan photos',parent=self.root)
-            if folder:self.create([p for p in Path(folder).iterdir() if p.is_file() and p.suffix.lower() in core.EXTENSIONS and '.mask.' not in p.name.lower()])
+            if folder:self.create([p for p in Path(folder).iterdir() if p.is_file() and p.suffix.lower() in core.EXTENSIONS and '.mask.' not in p.name.lower()],folder,choose_location)
         def open_project(self):
-            f=filedialog.askopenfilename(title='Open Scan Project.json',filetypes=[('Scan project','*.json')],parent=self.root)
+            f=filedialog.askopenfilename(title='Open saved photo group',filetypes=[('Saved work (Scan Project.json)','*.json')],parent=self.root)
             if f:self.load_project(Path(f))
         def load_project(self,path):
-            try:self.replace_project(core.Project.open(path))
+            try:self.replace_project(core.Project.open(path));self.update_controls()
             except Exception as exc:self.fail(exc)
         def refresh_tree(self):
             if not self.project:return
@@ -138,13 +223,14 @@ def main():
             if not self.project:return
             try:
                 r=self.row();self.photo=core.load_photo(r['path']);self.mask=self.project.read_mask(r,self.photo.size);self.draw()
-                warnings=' '.join(r.get('warnings',[]));score=r.get('score');score_text=f' · model score {score:.2f}' if score is not None else ''
-                self.detail.set(f'{self.index+1}/{len(self.project.data["photos"])} · {r["size"][0]}×{r["size"][1]} · {r["status"]}{score_text}  {warnings}')
+                warnings=' '.join(r.get('warnings',[]))
+                self.detail.set(f'Photo {self.index+1} of {len(self.project.data["photos"])} · {r["status"]}  {warnings}')
+                self.update_controls()
             except Exception as exc:self.fail(exc)
         def draw(self):
             self.canvas.delete('all')
             if self.photo is None:
-                self.canvas.create_text(max(200,self.canvas.winfo_width()/2),150,text='Choose a photo group to begin',fill='white',font=('TkDefaultFont',17));return
+                self.canvas.create_text(max(200,self.canvas.winfo_width()/2),150,text='Load a photo folder to begin',fill='white',font=('TkDefaultFont',17));return
             image=self.photo.copy()
             if self.mask is not None and self.view.get()!='original':
                 if self.view.get()=='mask':image=Image.fromarray(self.mask.astype(np.uint8)*255).convert('RGB')
@@ -165,7 +251,7 @@ def main():
         def remember(self):
             r=self.row();self.history.setdefault(self.index,[]).append((copy.deepcopy(r.get('points',[])),copy.deepcopy(r.get('box'))))
         def changed(self):
-            r=self.row();r['approved']=False;r['status']='Selection changed';self.project.save();self.refresh_tree();self.draw()
+            r=self.row();r['approved']=False;r['status']='Selection changed';self.project.save();self.refresh_tree();self.draw();self.update_controls()
         def press(self,event):
             if not self.project or self.busy:return
             point=self.normalized(event)
@@ -207,12 +293,18 @@ def main():
             r=self.row();path=self.project.mask_path(r)
             if not path or not path.exists():return self.fail('Preview or process this view first.')
             if r['status']=='Selection changed':return self.fail('Preview the changed selection before approving its mask.')
-            r['mask_sha256']=core.digest(path);r['approved']=True;r['status']='Approved';self.project.save();self.refresh_tree();self.show_photo()
+            r['mask_sha256']=core.digest(path);r['approved']=True;r['status']='Approved';self.project.save();self.refresh_tree();self.show_photo();self.export()
         def exclude(self):
             if not self.project or self.busy:return
             r=self.row();r['excluded']=not r.get('excluded',False);self.project.save();self.refresh_tree();self.show_photo()
+            if (self.project.root/'Export Report.json').exists():self.export()
         def set_mode_hint(self):
-            self.mode_hint.configure(text=('Draw a box around the target. Keep/Remove points refine the rock, log, plant, or other subject.' if self.mode.get()=='object' else 'Draw a box around a distraction to remove. Remove points select it; Keep points protect the scene. Start a new anchor when the distraction changes.'))
+            mode=self.mode.get() if self.project else self.new_mode.get()
+            if self.tool.get()=='box':
+                text='Draw a box around what to keep, then choose Process photos. Ready results save automatically.' if mode=='object' else 'Draw a box around the unwanted area, then choose Process photos. The surrounding scene is kept.'
+            else:text=f'Click areas to {"keep" if self.tool.get()=="keep" else "remove"}, then choose Adjust this selection → Preview this photo’s result.'
+            if not self.project:text='Load photo folder → draw around what to keep → Process photos.'
+            self.mode_hint.configure(text=text)
         def change_mode(self):
             if self.project and self.mode.get()!=self.project.data['mode']:
                 self.mode.set(self.project.data['mode']);messagebox.showinfo('Workflow is fixed for this project','Create a separate project for the other workflow so existing masks keep their meaning.',parent=self.root)
@@ -230,7 +322,9 @@ def main():
             threading.Thread(target=target,daemon=True).start()
         def get_predictor(self):
             if self.predictor is None:
-                self.events.put(('status','Loading local segmentation model on CPU…'))
+                if not (model_directory()/'config.json').is_file():
+                    raise RuntimeError('The local processing model is missing. Extract the complete app download, or follow the source setup in the quick guide.')
+                self.events.put(('status','Loading the local photo-processing model…'))
                 self.predictor=core.Predictor(model_directory())
             return self.predictor
         def preview(self):
@@ -240,21 +334,33 @@ def main():
                 core.process_one(self.project,index,self.get_predictor());self.events.put(('status','Preview ready. Add points if needed, or process the group.'))
             self.run(work)
         def batch(self,from_here=False):
-            if not self.project:return self.fail('Choose a photo group and project folder first.')
+            if not self.project:return self.fail('Load a photo folder first.')
             start=self.index if from_here else 0;self.progress.configure(maximum=len(self.project.data['photos']))
+            rows=self.project.data['photos']
+            first=next((i for i in range(start,len(rows)) if not rows[i].get('excluded')),None)
+            if first is None:
+                self.status.set('All photos are skipped. Restore a photo before processing.');return
+            previous=rows[start-1] if start>0 else None
+            can_resume=previous and previous.get('mask') and not core.tracking_uncertain(previous)
+            if not (rows[first].get('points') or rows[first].get('box') or rows[first].get('approved') or can_resume):
+                self.index=first;self.tree.selection_set(str(first));self.show_photo();self.tool.set('box');self.set_mode_hint()
+                self.status.set('First, draw a box around what to keep. This tells the app which part of the photo is your subject.');return
             def work():
                 predictor=self.get_predictor()
                 core.process_group(self.project,predictor,self.cancel,lambda i,s:self.events.put(('progress',(i+1,s))),start)
-                self.events.put(('status','Processing stopped.' if self.cancel.is_set() else 'Group processed. Inspect Review/Error views, then export the ready and approved photos.'))
+                if self.cancel.is_set():self.events.put(('status','Processing stopped. Results were not updated; choose Process photos when ready to continue.'))
+                else:self.export_results()
             self.run(work)
+        def export_results(self):
+            report=core.export(self.project,cancel=self.cancel)
+            good=sum(r['status']=='exported' for r in report);bad=sum(r['status']=='error' for r in report)
+            held=sum(not r.get('excluded') and r['status']!='Ready' and not r.get('approved') for r in self.project.data['photos'])
+            self.events.put(('status',f'Saved {good} photos with masks. {held} need review; {bad} could not be saved. Choose Show results folder for the files to import into RealityScan.'))
         def export(self):
             if not self.project:return
-            def work():
-                report=core.export(self.project,cancel=self.cancel);good=sum(r['status']=='exported' for r in report);bad=sum(r['status']=='error' for r in report);held=sum(r['status'].startswith('not_exported') for r in report)
-                self.events.put(('status',f'Exported {good} photos with matching masks. {held} need review; {bad} errors. See Export Report.json.'))
-            self.run(work)
+            self.run(self.export_results)
         def open_output(self):
-            if self.project:webbrowser.open(self.project.root.as_uri())
+            if self.project:webbrowser.open((self.project.root/'Prepared Photos').as_uri())
         def poll(self):
             try:
                 while True:
@@ -266,21 +372,48 @@ def main():
                         self.busy=False;self.cancel_button.configure(state='disabled')
                         for b in self.job_buttons:b.configure(state='normal')
                         if self.project:self.refresh_tree();self.show_photo()
+                        self.update_controls()
             except queue.Empty:pass
             self.root.after(150,self.poll)
         def build_leaf_tab(self,ttk,tk,filedialog,messagebox):
-            ttk.Label(self.leaf_tab,text='Prepare leaves and isolated image cutouts',font=('TkDefaultFont',16)).pack(anchor='w',pady=(15,8),padx=15)
-            ttk.Label(self.leaf_tab,text='Uses the established leaf processor. This workflow crops, centers and resizes; use Scan masks for photogrammetry.',wraplength=1000).pack(anchor='w',padx=15)
             self.leaf_source=tk.StringVar();self.leaf_output=tk.StringVar();self.leaf_size=tk.IntVar(value=4096)
-            for label,var in [('Photo folder',self.leaf_source),('Output folder',self.leaf_output)]:
-                frame=ttk.Frame(self.leaf_tab);frame.pack(fill='x',padx=15,pady=10);ttk.Label(frame,text=label,width=15).pack(side='left');ttk.Entry(frame,textvariable=var).pack(side='left',fill='x',expand=True)
-                def choose(v=var):
-                    value=filedialog.askdirectory(parent=self.root)
-                    if value:v.set(value)
-                ttk.Button(frame,text='Browse…',command=choose).pack(side='left',padx=5)
-            f=ttk.Frame(self.leaf_tab);f.pack(fill='x',padx=15,pady=8);ttk.Label(f,text='Square size').pack(side='left');ttk.Combobox(f,textvariable=self.leaf_size,values=[1024,2048,4096,8192],width=8,state='readonly').pack(side='left',padx=8)
-            self.leaf_run=ttk.Button(self.leaf_tab,text='Prepare cutouts',command=self.run_leaf);self.leaf_run.pack(anchor='w',padx=15,pady=8);self.job_buttons.append(self.leaf_run)
-            ttk.Label(self.leaf_tab,text='Choose a new output folder for a new batch. Originals and manually edited exports are protected. Complex backgrounds work better in Scan masks with a subject selection.',wraplength=1000).pack(anchor='w',padx=15,pady=12)
+            bar=ttk.Frame(self.leaf_tab);bar.pack(fill='x',pady=6)
+            self.leaf_load=ttk.Button(bar,text='Load photo folder…',command=self.choose_leaf_folder);self.leaf_load.pack(side='left',padx=3)
+            self.leaf_run=ttk.Button(bar,text='Process cutouts',command=self.run_leaf);self.leaf_run.pack(side='left',padx=3)
+            self.leaf_results_button=ttk.Button(bar,text='Show cutout results',command=self.open_leaf_output);self.leaf_results_button.pack(side='left',padx=3)
+            more=ttk.Menubutton(bar,text='More options');more.pack(side='right',padx=3)
+            menu=tk.Menu(more,tearoff=False);more.configure(menu=menu)
+            menu.add_command(label='Choose a different save folder…',command=self.choose_leaf_output)
+            size=tk.Menu(menu,tearoff=False)
+            for value in [1024,2048,4096,8192]:size.add_radiobutton(label=f'{value} × {value} pixels',variable=self.leaf_size,value=value)
+            menu.add_cascade(label='Cutout image size',menu=size)
+            menu.add_separator();menu.add_command(label='Read the quick guide',command=self.guide)
+            self.job_buttons += [self.leaf_load,self.leaf_run,more]
+            self.leaf_source.trace_add('write',lambda *_:self.update_controls())
+            self.leaf_output.trace_add('write',lambda *_:self.update_controls())
+            ttk.Label(self.leaf_tab,text='Load a photo folder, then choose Process cutouts. Results save in a new folder beside your photos.',wraplength=900).pack(anchor='w',pady=12,padx=3)
+            ttk.Label(self.leaf_tab,text='Photo folder:').pack(anchor='w',padx=3)
+            ttk.Label(self.leaf_tab,textvariable=self.leaf_source,wraplength=900).pack(anchor='w',padx=12,pady=(0,12))
+            ttk.Label(self.leaf_tab,text='Results folder:').pack(anchor='w',padx=3)
+            ttk.Label(self.leaf_tab,textvariable=self.leaf_output,wraplength=900).pack(anchor='w',padx=12,pady=(0,20))
+            ttk.Label(self.leaf_tab,text='This creates square cutout images for leaves, decals and artwork. For 3D scans, use Photos for 3D scanning to keep the original framing.',wraplength=900).pack(anchor='w',padx=3,pady=12)
+        def choose_leaf_folder(self):
+            if self.busy:return
+            folder=filedialog.askdirectory(title='Choose photos to turn into cutouts',parent=self.root)
+            if not folder:return
+            try:output=create_results_folder(folder,'Cutouts')
+            except OSError:
+                output=filedialog.askdirectory(title='Choose where to save the cutouts',parent=self.root)
+                if not output:return
+            self.leaf_source.set(folder);self.leaf_output.set(str(output))
+            self.status.set('Photo folder loaded. Choose Process cutouts; original photos stay untouched.')
+        def choose_leaf_output(self):
+            if self.busy:return
+            folder=filedialog.askdirectory(title='Choose a separate folder for cutout results',parent=self.root)
+            if folder:self.leaf_output.set(folder)
+        def open_leaf_output(self):
+            output=self.leaf_output.get()
+            if output and Path(output).is_dir():webbrowser.open(Path(output).resolve().as_uri())
         def run_leaf(self):
             source=self.leaf_source.get();output=self.leaf_output.get();size=self.leaf_size.get()
             if not Path(source).is_dir() or not output:return self.fail('Choose both a photo folder and an output folder.')

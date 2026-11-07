@@ -4,9 +4,10 @@ Checks establish specific behaviors, not a general mask-accuracy score.
 
 ## Automated and packaged checks
 
-- 54 regression tests passed locally, covering the existing image processor,
+- 57 regression tests passed locally, covering the existing image processor,
   original-byte preservation, EXIF mask orientation, full-size exports, protected
-  manual changes, project locks and review/tracking behavior. One Windows symlink
+  manual changes, project locks, review/tracking behavior and fresh default result
+  folders that preserve earlier work. One Windows symlink
   privilege check was skipped. macOS also passed the source regression suite.
 - Native Windows x64 and Apple Silicon packages passed real local image-model
   and temporal-tracking inference from their bundled model.
@@ -15,10 +16,18 @@ Checks establish specific behaviors, not a general mask-accuracy score.
   and three leaf/image cutouts. That harness supplies file-picker return values;
   it does **not** establish human OS-picker acceptance. The compiled Windows
   layout and native photo-picker opening were separately observed.
+- The simplified workflow checks one folder-picker call, helpful handling of a
+  missing starting selection, automatic saving from Process photos, automatic
+  saving after acceptance, one-picker leaf cutouts, and primary controls fitting
+  the minimum window size. Windows main-screen, menu and leaf layouts were also
+  observed through the native app. Human native-picker selection remains unverified.
 - Original photo hashes and exported source pixel dimensions were checked.
   An automatic Ready label does not establish a pixel-perfect silhouette.
 
 ## Real photo-group trials
+
+These trials were recorded for 0.2.1. The 0.2.2 interface keeps the same underlying
+segmentation and tracking algorithms; these are not new mask-accuracy trials.
 
 | Group | Photos | Automatic outcome | Observed limitation |
 | --- | ---: | --- | --- |

@@ -29,6 +29,12 @@ mask naming. They preserve original photo bytes, metadata, framing, dimensions
 and EXIF orientation. The leaf tab uses the existing traditional image processor;
 it intentionally changes framing and must not be used on scan source photos.
 
+The normal scan workflow is **Load photo folder → draw a box around the subject
+→ Process photos**. Ready results save automatically in a new folder beside the
+photos. The leaf tab needs only **Load photo folder → Process cutouts**. Less
+common settings and corrections are under **More options** and **Adjust this
+selection**. Earlier output folders are preserved.
+
 This is not a new segmentation algorithm or an unattended reconstruction tool.
 It packages an artist-oriented workflow around existing models. Supports, wires,
 fine structures, reflections and complex backgrounds remain difficult. Inspect

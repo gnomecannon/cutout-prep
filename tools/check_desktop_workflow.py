@@ -37,14 +37,26 @@ def main():
             if app is None or app.busy:root.after(100,tick);return
             n=phase[0];phase[0]+=1
             if n==0:
-                with patch.object(filedialog,'askopenfilenames',return_value=tuple(map(str,sorted(photos.glob('*.png'))))),patch.object(filedialog,'askdirectory',return_value=str(output/'Project')):app.choose_files()
+                root.geometry('820x600');root.update_idletasks()
+                for button in [app.load_button,app.process_button,app.results_button,app.more_button]:
+                    assert button.winfo_x()>=0 and button.winfo_x()+button.winfo_width()<=button.master.winfo_width()
+                result['primary_controls_fit_minimum_window']=True
+                assert str(app.process_button['state'])=='disabled'
+                with patch.object(filedialog,'askdirectory',return_value=str(photos)) as picker:app.choose_folder()
+                assert picker.call_count==1
                 assert len(app.project.data['photos'])==3
+                assert app.project.root.parent==photos.parent and app.project.root!=photos
+                app.batch();assert not app.busy and app.predictor is None
+                result['one_folder_picker_and_selection_guidance']=True
             elif n==1:
                 app.allow_border.set(True);app.change_border();x,y,w,h=app.bounds
                 app.press(SimpleNamespace(x=x+w*.18,y=y+h*.12));app.release(SimpleNamespace(x=x+w*.85,y=y+h*.9));assert app.row()['box']
-                app.preview()
+                app.batch()
             elif n==2:
                 assert app.project.read_mask(app.row()) is not None
+                report=json.loads((app.project.root/'Export Report.json').read_text())
+                assert sum(r['status']=='exported' for r in report['photos'])==3
+                result['process_button_saves_results_automatically']=True
                 before=list(app.row()['points']);app.tool.set('keep');x,y,w,h=app.bounds
                 app.press(SimpleNamespace(x=x+w*.5,y=y+h*.5));app.undo();assert app.row()['points']==before
                 app.preview()
@@ -54,15 +66,18 @@ def main():
             elif n==4:
                 result['cancellation_reached_idle']=True;app.batch()
             elif n==5:
-                assert all(r['mask'] for r in app.project.data['photos']);app.approve();app.export()
+                assert all(r['mask'] for r in app.project.data['photos']);app.approve()
             elif n==6:
                 report=json.loads((app.project.root/'Export Report.json').read_text());exported=[r for r in report['photos'] if r['status']=='exported'];assert len(exported)==3,report['photos']
                 for row in exported:
                     assert core.digest(app.project.root/'Prepared Photos'/row['file'])==row['source_sha256']
                     with Image.open(app.project.root/'Prepared Photos'/row['mask']) as im:assert list(im.size)==row['raw_size']
-                result['scan_exports_verified']=3;app.leaf_source.set(str(photos));app.leaf_output.set(str(output/'Leaf'));app.leaf_size.set(1024);app.run_leaf()
+                result['scan_exports_verified']=3
+                with patch.object(filedialog,'askdirectory',return_value=str(photos)) as picker:app.choose_leaf_folder()
+                assert picker.call_count==1 and Path(app.leaf_output.get()).parent==photos.parent
+                app.leaf_size.set(1024);app.run_leaf()
             elif n==7:
-                report=json.loads((output/'Leaf/ProcessingReport.json').read_text());assert report['counts'].get('processed')==3,report['counts']
+                report=json.loads((Path(app.leaf_output.get())/'ProcessingReport.json').read_text());assert report['counts'].get('processed')==3,report['counts']
                 result['leaf_outputs_verified']=3;urls=[]
                 with patch.object(desktop.webbrowser,'open',side_effect=lambda url:urls.append(url)):app.guide()
                 assert urls and (desktop.resources()/'Guide.html').is_file()
@@ -74,7 +89,15 @@ def main():
             if app and app.project:app.project.close()
             root.destroy()
     def root(*args,**kwargs):
-        widget=real_tk(*args,**kwargs);captured['root']=widget;widget.after(800,tick);return widget
+        widget=real_tk(*args,**kwargs);captured['root']=widget
+        def callback_error(kind,value,tb):
+            result.update(ok=False,error=''.join(traceback.format_exception(kind,value,tb)))
+            (output/'Desktop Workflow.json').write_text(json.dumps(result,indent=2)+'\n')
+            app=captured.get('app')
+            if app and app.project:app.project.close()
+            widget.destroy()
+        widget.report_callback_exception=callback_error
+        widget.after(800,tick);return widget
     with patch.object(tk,'Tk',side_effect=root),patch.object(ttk,'Button',side_effect=button),patch.object(messagebox,'showerror',side_effect=fail),patch.object(sys,'argv',['cutout-prep-gui']):desktop.main()
     print(json.dumps(result,indent=2))
     return 0 if result.get('ok') else 1
