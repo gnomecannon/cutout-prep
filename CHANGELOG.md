@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.2.2 — simpler desktop workflow
+
+- Make the main actions Load photo folder and Process photos; save ready scan
+  results automatically, with guidance when a starting selection is needed.
+- Create a fresh results folder beside the photos without a second folder picker.
+  Preserve earlier batches and provide a manual save-location option.
+- Move selection tools, display modes, edge settings, saved work and alternate
+  scene handling into descriptive menus. Show review controls when relevant.
+- Simplify leaf cutouts to Load photo folder and Process cutouts, with image size
+  and save-location overrides under More options.
+
 ## 0.2.1 — experimental desktop scan release
 
 - Add an optional Windows/Apple Silicon desktop app with guided SAM 2.1 masks,

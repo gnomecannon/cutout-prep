@@ -9,15 +9,26 @@ without Apple notarization. Intel Macs have not been validated.
 
 ## Scan masks
 
-1. Choose photographs or a photo folder, then choose a separate project folder.
-2. Draw a box around the object or surface on a starting photo. Preview the mask.
-   Add Keep/Remove points when the selection needs correction.
-3. For a cliff that continues outside the photograph, enable **Target may continue
-   beyond photo edges**. Scene-removal regions may naturally meet the image edge.
-4. Process the group. Inspect the silhouettes, especially the flagged views.
-   A new selection or an approved view can restart tracking after uncertainty.
-5. Export ready/approved photographs. Import the **Prepared Photos** folder into
-   RealityScan. Each unchanged source photo has a matching `<photo.ext>.mask.png`.
+1. Choose **Load photo folder** in **Photos for 3D scanning**.
+2. Draw a box around the object or surface on the first useful photo.
+3. Choose **Process photos**. Ready photos and masks save automatically.
+4. Inspect the silhouettes. **Review photos** finds flagged views. Use **Adjust
+   this selection** for keep/remove clicks and a preview; use **Use this photo’s
+   result** only when its outline is correct. That also updates saved results.
+5. Choose **Show results folder** and import that folder into RealityScan.
+   Each unchanged source photo has a matching `<photo.ext>.mask.png`.
+
+Saved work is created in a new sibling folder named `<photo folder> - Scan Masks`;
+repeated loads receive a numbered folder and preserve previous batches. If that
+location is not writable, the app asks where to save. **More options → Load folder
+and choose save location** overrides it. **Open saved work** reopens an existing
+`Scan Project.json` instead of starting another batch.
+
+For a cliff that continues outside the photograph, use **More options → Mask
+settings → Subject continues beyond photo edges**. Additional display choices,
+outline adjustments and **Process again from this photo** are in More options.
+**For the next photo group → Keep scene; remove selected area** changes the
+workflow for a newly loaded group; existing masks keep their original meaning.
 
 Original photo framing, bytes, EXIF orientation and source pixel dimensions are
 preserved. Masks are mapped back to the original pixel orientation. Do not crop,
@@ -37,8 +48,10 @@ meshes, remove reflections, or recover measured albedo/roughness.
 ## Leaf and image cutouts
 
 The second tab uses the existing Cutout Prep image processor. It crops, centers,
-resizes and prepares color/alpha for game assets. Choose an input and a separate
-output folder, prepare the batch, then inspect its preview and report. Existing
+resizes and prepares color/alpha for game assets. Choose **Load photo folder**,
+then **Process cutouts**. A fresh `<photo folder> - Cutouts` folder is created
+automatically. Use **Show cutout results** to inspect the preview and report.
+Image size (4096 pixels by default) and a save-folder override are in **More options**. Existing
 manually changed exports remain protected. See [USAGE.md](USAGE.md) for recipes.
 
 ## Build from source
