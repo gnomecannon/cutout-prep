@@ -74,7 +74,12 @@ In PowerShell set `$env:CUTOUT_PREP_MODEL_DIR` to that directory, then run
 ```text
 python -m unittest discover -s tests -v
 python tools/build_portable.py --dist dist/desktop --work build/desktop --model-dir build/models/sam2-tiny
+python tools/check_portable_runtime.py --app "dist/desktop/Cutout Prep/Cutout Prep.exe" --output build/portable-check
 ```
+
+For the Mac check, use `dist/desktop/Cutout Prep.app/Contents/MacOS/Cutout Prep`
+as the executable path. Choose a new check-output directory each time. The check
+exercises both the bundled segmentation runtime and the frozen leaf worker.
 
 Dependency/model downloads need internet during setup. Runtime processing stays
 offline. The model downloader verifies a fixed revision and every file's hash.
