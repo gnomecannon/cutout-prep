@@ -24,3 +24,21 @@ LeafPairRebuild.json
 .image-preparation.lock
 .image-prep-*.tmp
 .cutout-prep-*.tmp
+
+# Local models, projects and scan output are never part of the source release.
+models/
+*.safetensors
+*.heic
+*.HEIC
+*.heif
+*.HEIF
+Scan Project.json
+Export Report.json
+.scanprep-project.lock
+Masks/
+Prepared Photos/
+Previous Exports/
+*.rsproj
+*.rcproj
+*.rsproj.*
+*.rcproj.*

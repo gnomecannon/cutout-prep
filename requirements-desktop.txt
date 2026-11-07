@@ -1,0 +1,12 @@
+# Reproducible Python 3.12 desktop build. On Windows install CPU torch first.
+Pillow==12.3.0
+numpy==2.5.4
+opencv-python-headless==5.0.0.93
+scipy==1.18.1
+pi-heif==1.4.0
+rawpy==0.27.1
+torch==2.15.0
+torchvision==0.29.2
+transformers==5.22.2
+safetensors==0.8.0
+pyinstaller==6.22.3

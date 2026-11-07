@@ -28,3 +28,11 @@ uses deterministic image-processing operations on the local CPU. It does not
 call an AI service, download a model, generate replacement texture detail, or
 upload photographs. Installing Python dependencies requires their normal package
 downloads.
+
+## Desktop scan workflow
+
+The desktop GUI, scan-mask processing, review fixes and packaging were also
+implemented with AI assistance under the same disclosure. The scan workflow
+uses the third-party SAM 2.1 model locally for inference. The traditional image
+cutout processor remains a separate workflow. Reported regression/runtime tests
+do not establish universal mask quality or independent expert acceptance.

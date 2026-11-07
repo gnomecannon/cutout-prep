@@ -1,0 +1,23 @@
+{
+  "repository": "facebook/sam2.1-hiera-tiny",
+  "revision": "de431c4043854a71d8101e17995dfe596bf101a5",
+  "license": "Apache-2.0",
+  "files": {
+    "config.json": {
+      "sha256": "860aff9751b139d83a4ad7df1e5535416fded533e0ead02625edbefcb9953cce",
+      "bytes": 5695
+    },
+    "preprocessor_config.json": {
+      "sha256": "6ebf229ee259368ce4a8d4f2fe893a72b053023710853e257253939e601f583d",
+      "bytes": 683
+    },
+    "model.safetensors": {
+      "sha256": "48c14467e5cf9e51870511feb72c89688e82dd74523142c0538b663e193ac2a7",
+      "bytes": 155908064
+    },
+    "README.md": {
+      "sha256": "dfa401b1b9358b9650ae487dd2f2bb336fd745c3609e3244adf2e97a22343857",
+      "bytes": 19965
+    }
+  }
+}

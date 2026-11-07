@@ -2,55 +2,60 @@
 
 [![CI](https://github.com/gnomecannon/cutout-prep/actions/workflows/ci.yml/badge.svg)](https://github.com/gnomecannon/cutout-prep/actions/workflows/ci.yml)
 
-Prepare isolated photographs and transparent artwork for game cutouts, decals,
-cards, and icons. Cutout Prep combines automatic background extraction, color
-preparation, alpha-aware resizing, padding, previews, and repeatable folder
-processing. It runs locally on the CPU using traditional image processing and
-per-image color calibration. Processing makes no network requests and downloads
-no pretrained model weights.
+A local desktop utility for artists preparing **photogrammetry masks** and
+**leaf/game-asset cutouts**. Experimental: expect selection, previews and review.
 
-**Experimental release.** Best suited to one connected, mostly opaque object on
-a plain, contrasting background. Foliage photographs motivated the extraction
-heuristics. Other subjects need representative trials and visual review.
+| Workflow | Output | Intended use |
+| --- | --- | --- |
+| Scan masks | Unchanged source photographs plus separate full-size masks | Rocks, isolated objects and selected cliff surfaces |
+| Leaf/image cutouts | Cropped, centered, color-prepared RGBA images | Decals, cards, icons and other game artwork |
+
+![Cliff mask example](docs/images/cliff-comparison.jpg)
+
+Public CC0 photograph; excluded areas are dimmed. Peripheral rock loss and
+retained crossing wires remain visible. [Source, method and limitations](docs/VALIDATION.md).
+
+[Download Windows / Apple Silicon Mac apps](https://github.com/gnomecannon/cutout-prep/releases)
+· [Desktop guide and source build](docs/DESKTOP.md)
+· [Validation and limitations](docs/VALIDATION.md)
+
+Portable apps include the local SAM 2.1 Tiny model and run on the CPU. No GPU,
+Python setup, online account or paid API is needed to use them. Photographs are
+not uploaded. Setup/build dependency downloads require internet.
+
+Scan masks support box/point selection, propagation through an ordered group,
+review/approval, saved projects, cancellation, JPEG/HEIC input and RealityScan
+mask naming. They preserve original photo bytes, metadata, framing, dimensions
+and EXIF orientation. The leaf tab uses the existing traditional image processor;
+it intentionally changes framing and must not be used on scan source photos.
+
+This is not a new segmentation algorithm or an unattended reconstruction tool.
+It packages an artist-oriented workflow around existing models. Supports, wires,
+fine structures, reflections and complex backgrounds remain difficult. Inspect
+masks even when marked Ready. See [alternatives](docs/ALTERNATIVES.md).
 
 ## AI development disclosure
 
-> AI generated all of this application's original code and tests. I am not a
-> programmer. I provided the requirements, design direction, and hands-on review
-> of image results, but I cannot independently audit the implementation. AI was
-> also used for debugging, code review, documentation, and packaging. This project
-> has not had an independent human code or security audit.
+AI generated the original application code and tests under human requirements,
+design direction and visual review. There has been no independent human source
+or security audit. Scan mode runs Meta's pretrained segmentation model locally;
+the established leaf processor uses traditional image processing.
+[Full disclosure](AI_DISCLOSURE.md).
 
-Read [the full disclosure](AI_DISCLOSURE.md) for the development history and the
-distinction between AI-generated code and the local processing pipeline.
+## Existing command-line image processor
 
-## Install
-
-Requires **Python 3.10 or newer**. Use a separate virtual environment so the
-image-processing dependencies do not replace packages used by other applications.
-Download and extract the [source release](https://github.com/gnomecannon/cutout-prep/releases),
-or clone this repository, then open a terminal in its folder.
-
-Windows PowerShell:
-
-```powershell
-python -m venv .venv
-.\.venv\Scripts\python -m pip install ".[raw]"
-.\.venv\Scripts\cutout-prep --help
-```
-
-macOS/Linux shell:
+The original CLI remains available with Python 3.10 or newer:
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install ".[raw]"
-.venv/bin/cutout-prep --help
+python -m venv .venv
+# Activate this environment, then:
+python -m pip install ".[raw]"
+cutout-prep --help
 ```
 
-The `raw` extra adds rawpy/LibRaw for DNG input. Use `pip install .` instead if
-you only need ordinary image formats. Installation downloads dependencies;
-subsequent processing works offline. Windows/Linux installation and tests run in
-CI. macOS has not been separately validated for this release.
+The `raw` extra adds DNG decoding. Install `.` without that extra for ordinary
+image formats. The CLI alone does not require or download a pretrained model.
+For the optional desktop/scan dependencies use [DESKTOP.md](docs/DESKTOP.md).
 
 ## Prepare photographs
 

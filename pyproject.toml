@@ -4,14 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cutout-prep"
-version = "0.1.0"
-description = "Local, deterministic preparation of photographed cutouts and transparent artwork for game assets."
+version = "0.2.1"
+description = "Offline scan masks and image cutouts for photogrammetry and game assets."
 readme = "README.md"
 requires-python = ">=3.10"
 license = "MIT"
 license-files = ["LICENSE", "THIRD_PARTY_NOTICES.md"]
 authors = [{name = "gnomecannon"}]
-keywords = ["image-processing", "game-assets", "cutout", "foliage", "alpha", "raw"]
+keywords = ["image-processing", "game-assets", "cutout", "foliage", "alpha", "raw", "photogrammetry", "segmentation"]
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Environment :: Console",
@@ -32,10 +32,12 @@ dependencies = [
 
 [project.optional-dependencies]
 raw = ["rawpy>=0.27.1,<0.28"]
+scan = ["torch==2.15.0", "torchvision==0.29.2", "transformers==5.22.2", "safetensors==0.8.0", "pi-heif==1.4.0"]
 dev = ["build>=1.2,<2"]
 
 [project.scripts]
 cutout-prep = "cutout_prep.process_images:main"
+cutout-prep-gui = "cutout_prep.desktop:main"
 
 [project.urls]
 Homepage = "https://github.com/gnomecannon/cutout-prep"
@@ -46,4 +48,4 @@ Issues = "https://github.com/gnomecannon/cutout-prep/issues"
 where = ["src"]
 
 [tool.setuptools.package-data]
-cutout_prep = ["sRGB.icc"]
+cutout_prep = ["sRGB.icc", "resources/*.html"]

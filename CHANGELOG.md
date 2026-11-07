@@ -1,6 +1,19 @@
 # Changelog
 
-## 0.1.0 — 2026-10-30
+## 0.2.1 — experimental desktop scan release
+
+- Add an optional Windows/Apple Silicon desktop app with guided SAM 2.1 masks,
+  ordered-group tracking, saved projects, review/approval and protected exports.
+- Preserve scan photo bytes, framing, EXIF orientation and full-size mask geometry.
+- Add explicit permission for surfaces to continue beyond photo edges.
+- Stop boundary-only warnings from holding unrelated following views; retain
+  review propagation for uncertain target identity.
+- Reuse the public leaf/image processor in the second tab.
+- Use decoder-only pi-heif, retain bundled notices and provide dependency sources.
+- Keep local scans, private paths, model weights and project data outside Git.
+
+
+## 0.1.0 â€” 2026-10-30
 
 Initial experimental public release, extracted from a privately used photograph
 preparation workflow.

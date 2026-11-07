@@ -7,10 +7,12 @@ The implementation's AI provenance is described in [AI_DISCLOSURE.md](AI_DISCLOS
 
 ## Runtime dependencies
 
-Dependencies are installed as separate Python packages. This source repository
-does not vendor their implementations or distribute a bundled Python runtime.
-Package wheels can contain additional libraries and notices; retain the notices
-shipped with the exact packages when redistributing a binary application.
+The source tree does not vendor dependency implementations. The optional desktop
+release bundles a Python runtime, local model and native libraries. Its
+`licenses/` directory retains the included distributions' license and notice
+files. `BUILD_INFO.json` records the versions actually packaged. The release's
+Dependency Sources archive supplies the matching HEIF, LibRaw and FFmpeg library
+sources and relevant wheel-build sources. See [binary redistribution](docs/BINARY_DISTRIBUTION.md).
 
 | Dependency | Main project license | Upstream notices |
 | --- | --- | --- |
@@ -20,6 +22,12 @@ shipped with the exact packages when redistributing a binary application.
 | OpenCV Python distribution | MIT for the packaging/build scripts; Apache-2.0 for OpenCV itself; binary dependencies have additional notices | [Packaging license](https://github.com/opencv/opencv-python/blob/4.x/LICENSE.txt), [third-party notices](https://github.com/opencv/opencv-python/blob/4.x/LICENSE-3RD-PARTY.txt) |
 | rawpy, optional for DNG | MIT | [rawpy license](https://github.com/letmaik/rawpy/blob/main/LICENSE) |
 | LibRaw, used by rawpy | See the LGPL-2.1 license bundled by rawpy and its third-party notices | [rawpy's LibRaw license](https://github.com/letmaik/rawpy/blob/main/LICENSE.LibRaw) |
+| pi-heif, optional HEIC decoding | BSD-3-Clause wrapper; wheels include LGPL-3.0 libheif/libde265 | [HEIF project](https://github.com/bigcat88/pillow_heif) |
+| PyTorch and Torchvision, scan mode | BSD-style licenses and bundled-library notices | [PyTorch](https://github.com/pytorch/pytorch), [Torchvision](https://github.com/pytorch/vision) |
+| Transformers and safetensors, scan mode | Apache-2.0 | [Transformers](https://github.com/huggingface/transformers), [safetensors](https://github.com/huggingface/safetensors) |
+| SAM 2.1 Hiera Tiny weights | Apache-2.0; Meta copyright retained | [Model card](https://huggingface.co/facebook/sam2.1-hiera-tiny), [license copy](tools/SAM2-LICENSE) |
+| Python, Tcl/Tk | PSF and Tcl/Tk licenses | [Python](https://www.python.org/), [Tcl/Tk](https://www.tcl.tk/) |
+| PyInstaller bootloader | GPL with the application-distribution exception | [PyInstaller license](https://pyinstaller.org/en/stable/license.html) |
 
 Python and the packages' own dependencies retain their respective licenses.
 The current rawpy wheel documentation states that the optional GPL demosaic
@@ -44,6 +52,6 @@ the linked software projects remain separately licensed.
 - Adobe DNG SDK, [reference RGB tone-curve ordering](https://android.googlesource.com/platform/external/dng_sdk.git/+/refs/heads/main/source/dng_reference.cpp): the RGB tone-ordering rule. The SDK is not bundled.
 - OpenCV, [GrabCut](https://docs.opencv.org/4.x/d8/d83/tutorial_py_grabcut.html) and [watershed segmentation](https://docs.opencv.org/4.x/d3/db4/tutorial_py_watershed.html): segmentation provided by the external OpenCV package.
 
-The included demonstration images are procedural fixtures, not camera
-photographs or third-party artwork. Private development photographs, project
-assets and processing reports are not included in this distribution.
+Procedural demonstrations are labelled as such. Any public photographic example
+has its own source/credit record. Private development photographs, project assets,
+local paths and processing reports are excluded from the source and app releases.
