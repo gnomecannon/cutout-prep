@@ -1,5 +1,5 @@
 """Build the desktop on its native OS, with a separately supplied local model."""
-import argparse,hashlib,importlib.metadata,json,os,platform,shutil,subprocess,sys
+import argparse,hashlib,importlib.metadata,json,os,platform,plistlib,shutil,subprocess,sys
 from pathlib import Path
 from packaging.requirements import Requirement
 
@@ -35,6 +35,7 @@ def main():
     data=[(model,'models/sam2-tiny'),(package/'resources/Guide.html','.'),(package/'sRGB.icc','cutout_prep'),(repo/'LICENSE','.'),(repo/'THIRD_PARTY_NOTICES.md','.'),(repo/'tools/SAM2-LICENSE','models/sam2-tiny'),(licenses,'licenses')]
     command=[sys.executable,'-m','PyInstaller','--noconfirm','--onedir','--windowed','--name','Cutout Prep','--distpath',str(dist),'--workpath',str(work/'pyinstaller'),'--specpath',str(work),'--paths',str(repo/'src'),'--additional-hooks-dir',str(repo/'tools/hooks')]
     if not a.incremental:command+=['--clean']
+    if sys.platform=='darwin':command+=['--osx-bundle-identifier','io.github.gnomecannon.cutout-prep']
     for src,dest in data:command+=['--add-data',str(src)+os.pathsep+dest]
     for module in ['cutout_prep.process_images','cutout_prep.scan_core','rawpy','pi_heif','scipy.ndimage','PIL._tkinter_finder','transformers.models.sam2.modeling_sam2','transformers.models.sam2.processing_sam2','transformers.models.sam2.image_processing_sam2','transformers.models.sam2.configuration_sam2']:
         command+=['--hidden-import',module]
@@ -46,6 +47,12 @@ def main():
     for name,sha in fingerprints.items():
         if hashlib.sha256((repo/name).read_bytes()).hexdigest()!=sha:raise SystemExit('App source changed during build: '+name)
     app=dist/('Cutout Prep.app' if sys.platform=='darwin' else 'Cutout Prep');extras=dist if sys.platform=='darwin' else app
+    if sys.platform=='darwin':
+        info=app/'Contents/Info.plist'
+        with info.open('rb') as f:metadata=plistlib.load(f)
+        metadata.update(CFBundleShortVersionString=__version__,CFBundleVersion=__version__)
+        with info.open('wb') as f:plistlib.dump(metadata,f)
+        subprocess.run(['codesign','--force','--deep','--sign','-',str(app)],check=True)
     for name,source in [('Guide.html',package/'resources/Guide.html'),('LICENSE',repo/'LICENSE'),('THIRD_PARTY_NOTICES.md',repo/'THIRD_PARTY_NOTICES.md')]:shutil.copy2(source,extras/name)
     (extras/'BUILD_INFO.json').write_text(json.dumps({'version':__version__,'platform':platform.platform(),'architecture':platform.machine(),'python':platform.python_version(),'source_sha256':fingerprints,'packages':versions,'model':manifest},indent=2)+'\n',encoding='utf-8')
     print(app)
