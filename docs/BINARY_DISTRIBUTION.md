@@ -8,6 +8,12 @@ HEIC reading uses **pi-heif**, a decoder-only distribution. The application does
 not package pillow-heif's x265 encoder. HEIF images are decoded locally; exported
 photograph copies retain their original bytes.
 
+For macOS, the OpenCV dependency is rebuilt without FFmpeg/video I/O. The public
+build recipe and diagnostic-path redaction tool are in `tools/`. This removes
+unneeded video encoders from the app and avoids publishing builder home paths.
+The OpenCV algorithm source is unmodified; the compilation options and binary
+diagnostic-string redactions are recorded in that recipe.
+
 The release includes a companion **CutoutPrep-DependencySources-0.2.1.zip**.
 It contains the matching libheif, libde265, LibRaw and FFmpeg sources and relevant
 wheel source/build material. Its manifest records source URLs, versions and
@@ -26,6 +32,6 @@ codesign --force --deep --sign - "Cutout Prep.app"
 ```
 
 The source build instructions are in [DESKTOP.md](DESKTOP.md). Native dependency
-rebuilds and alternate Intel Mac configurations have not been independently
-validated by this project. Retain the dependency sources, licenses and notices
+rebuilds beyond the supplied image-only OpenCV recipe, and alternate Intel Mac
+configurations, have not been validated by this project. Retain the dependency sources, licenses and notices
 when redistributing the portable binaries.

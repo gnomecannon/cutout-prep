@@ -47,11 +47,27 @@ Use Python **3.12 with Tk** and a separate environment. A binary must be built o
 its target OS; Windows does not build a native Mac app. On Homebrew, the native
 build prerequisites are `python@3.12` and `python-tk@3.12`.
 
+The public Mac package uses an image-only OpenCV build. Upstream Mac wheels also
+bundle video encoders that this application does not use. To reproduce the
+portable Mac release, rebuild OpenCV after installing the desktop requirements
+below (requires Xcode command-line tools).
+
+This takes longer than installing a wheel and uses four CPU build jobs. Its
+wheel is built from the pinned OpenCV source, with video I/O disabled, and local
+build paths are redacted before packaging. Ordinary portable-app users do not
+need this build step.
+
 ```sh
 python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements-desktop.txt
 .venv/bin/python -m pip install --no-deps -e .
 .venv/bin/python tools/download_model.py --output build/models/sam2-tiny
+```
+
+On macOS, then replace the upstream OpenCV wheel with the image-only build:
+
+```sh
+CUTOUT_BUILD_PYTHON="$PWD/.venv/bin/python" bash tools/build_macos_opencv.sh
 ```
 
 On Windows use `.venv\Scripts\python` for those commands. Install the matching

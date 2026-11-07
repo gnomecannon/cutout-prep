@@ -9,6 +9,10 @@ def main():
     repo=Path(__file__).resolve().parents[1];package=repo/'src/cutout_prep';dist=Path(a.dist).resolve();work=Path(a.work).resolve();model=Path(a.model_dir).resolve();work.mkdir(parents=True,exist_ok=True)
     sys.path.insert(0,str(repo/'src'))
     from cutout_prep import __version__
+    if sys.platform=='darwin':
+        import cv2
+        if any('x264' in p.name.lower() or 'x265' in p.name.lower() for p in Path(cv2.__file__).parent.rglob('*.dylib')):
+            raise SystemExit('Use tools/build_macos_opencv.sh before packaging: this app does not need bundled video encoders.')
     fingerprints={str(path.relative_to(repo)).replace('\\','/'):hashlib.sha256(path.read_bytes()).hexdigest() for path in sorted(package.rglob('*')) if path.is_file() and '__pycache__' not in path.parts}
     manifest=json.loads((repo/'tools/model-manifest.json').read_text())
     for name,row in manifest['files'].items():
@@ -54,7 +58,7 @@ def main():
         with info.open('wb') as f:plistlib.dump(metadata,f)
         subprocess.run(['codesign','--force','--deep','--sign','-',str(app)],check=True)
     for name,source in [('Guide.html',package/'resources/Guide.html'),('LICENSE',repo/'LICENSE'),('THIRD_PARTY_NOTICES.md',repo/'THIRD_PARTY_NOTICES.md')]:shutil.copy2(source,extras/name)
-    (extras/'BUILD_INFO.json').write_text(json.dumps({'version':__version__,'platform':platform.platform(),'architecture':platform.machine(),'python':platform.python_version(),'source_sha256':fingerprints,'packages':versions,'model':manifest},indent=2)+'\n',encoding='utf-8')
+    (extras/'BUILD_INFO.json').write_text(json.dumps({'version':__version__,'platform':platform.platform(),'architecture':platform.machine(),'python':platform.python_version(),'source_sha256':fingerprints,'packages':versions,'model':manifest,'opencv_profile':'image-only local build' if sys.platform=='darwin' else 'upstream Windows wheel'},indent=2)+'\n',encoding='utf-8')
     print(app)
 
 
