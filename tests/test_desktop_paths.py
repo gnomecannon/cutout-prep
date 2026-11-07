@@ -16,7 +16,7 @@ class DesktopResultFolders(unittest.TestCase):
             previous = first / 'hand-edited mask.png'
             previous.write_bytes(b'keep this edit')
             second = create_results_folder(source, 'Scan Masks')
-            self.assertEqual(first.parent, source.parent)
+            self.assertEqual(first.parent, source.parent.resolve())
             self.assertEqual(second.name, 'Rock photos - Scan Masks (2)')
             self.assertEqual(previous.read_bytes(), b'keep this edit')
             self.assertEqual(original.read_bytes(), b'original photograph')
