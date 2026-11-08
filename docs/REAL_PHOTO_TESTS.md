@@ -163,3 +163,24 @@ rate. Small background specks, narrow gaps, hair, contact shadows and occlusion
 can remain. The foreground model analyzes a 1024-pixel square and bounded edge
 refinement cannot restore arbitrary detail below its analysis scale. The scan
 workflow and reconstruction/material limitations are unchanged.
+
+## Version 0.4.1 fern correction
+
+The fern's retained white spots prompted a conditional close-view pass, rather
+than treating the first 0.4 output as accepted. Four overlapping predictions
+are combined conservatively on thin colorful subjects with measured bright
+neutral backing. Edge cleanup cannot grow rejected paper back into those gaps.
+
+On the original fern at 1952 × 1470 analysis pixels, retained bright neutral
+pixels fell from 7,744 to 168 at alpha ≥ 128. The color proxy uses minimum RGB
+≥ 220 and channel span < 24; it is not a ground-truth mask or a general accuracy
+score. More than 99.8% of previously near-opaque colored pixels remained above
+the same alpha threshold (the source proxy uses old alpha ≥ 230 and channel
+span ≥ 40). Fine pale edges still need inspection.
+
+A separate real-photo conifer composite on bright neutral paper with a soft
+shadow improved retained-background fraction from 2.80% to 1.78%, while reference
+foreground recall stayed above 99.99%. The six broad-leaf controls were unchanged.
+All other 14 opaque online captures were pixel-identical at the same bounded
+analysis input; pale flowers, the feather, shells and rock highlights kept their
+previous route. Supplied alpha remains a separate preservation control.

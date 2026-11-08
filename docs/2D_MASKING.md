@@ -33,6 +33,22 @@ pixels on the long edge. Final color textures are rendered from the original
 capture, not the analysis preview. Very fine detail below those analysis scales
 can still be lost. Inferred alpha is not measured optical transmission.
 
+## Fine fronds on bright paper: 0.4.1
+
+The first detailed pass still left white backing around fine fern leaflets.
+Thin chromatic subjects with measured bright neutral backing and retained paper
+now receive four overlapping close-view predictions. Confident colored source
+material stays protected, local predictions may only reduce the global mask,
+and excessive coverage disagreement rejects the correction. An alpha ceiling
+prevents the edge projection from growing rejected paper back into the gaps.
+
+This pass is automatic and conditional; it does not remove white pixels from
+every image. Broad solid objects, predominantly pale subjects and backgrounds
+without the required paper evidence keep the previous route. Supplied alpha
+and masks continue to bypass extraction. Qualifying captures take additional
+CPU inference time. Pale details, tiny structures and mixed materials still
+need visual review.
+
 ## Real-photo evidence and limits
 
 The [pinned online cases](REAL_PHOTO_TESTS.md) preserve the v0.3 baseline. Direct

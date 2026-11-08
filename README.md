@@ -55,6 +55,10 @@ gaps, fuzzy edges, shadows and overlap still need inspection. See the
 [2D pipeline and comparisons](docs/2D_MASKING.md) and the preserved
 [v0.3 real-photo baseline](docs/REAL_PHOTO_TESTS.md).
 
+Version 0.4.1 adds a conditional close-view pass for fine colorful subjects on
+bright neutral paper, reducing the white backing left around the test fern's
+leaflets. It does not apply a general white-color deletion rule.
+
 ## AI development disclosure
 
 AI generated the original application code and tests under human requirements,

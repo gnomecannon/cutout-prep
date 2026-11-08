@@ -1,5 +1,16 @@
 # Changelog
 
+## 0.4.1 — fine fronds on paper
+
+- Recheck thin, colorful subjects against measured bright neutral backing with
+  four overlapping close views. Preserve confident colored material and reject
+  excessive disagreement with the original subject mask.
+- Prevent edge refinement from growing rejected low-confidence paper back into
+  fine gaps. Broad solid objects, pale subjects, cluttered backgrounds and
+  supplied alpha retain their existing routes.
+- Keep the folder/process interface unchanged. The conditional close-view pass
+  adds CPU work only when its capture/shape checks pass.
+
 ## 0.4.0 — detailed 2D cutouts
 
 - Use a pinned local BiRefNet Lite model and bounded edge refinement for opaque
