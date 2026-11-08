@@ -174,8 +174,9 @@ neutral backing. Edge cleanup cannot grow rejected paper back into those gaps.
 On the original fern at 1952 × 1470 analysis pixels, retained bright neutral
 pixels fell from 7,744 to 168 at alpha ≥ 128. The color proxy uses minimum RGB
 ≥ 220 and channel span < 24; it is not a ground-truth mask or a general accuracy
-score. More than 99.8% of previously opaque colored pixels remained above the
-same alpha threshold. Fine pale edges still need inspection.
+score. More than 99.8% of previously near-opaque colored pixels remained above
+the same alpha threshold (the source proxy uses old alpha ≥ 230 and channel
+span ≥ 40). Fine pale edges still need inspection.
 
 A separate real-photo conifer composite on bright neutral paper with a soft
 shadow improved retained-background fraction from 2.80% to 1.78%, while reference
