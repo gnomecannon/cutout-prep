@@ -1,6 +1,6 @@
 """Portable Cutout Prep UI. Windows/macOS source; CPU-only, offline processing."""
 from __future__ import annotations
-import argparse, contextlib, copy, json, os, queue, runpy, subprocess, sys, threading, traceback, webbrowser
+import argparse, contextlib, copy, json, os, queue, runpy, subprocess, sys, tempfile, threading, traceback, webbrowser
 from pathlib import Path
 
 def resources():return Path(getattr(sys,'_MEIPASS',Path(__file__).resolve().parent/'resources'))
@@ -9,9 +9,9 @@ def model_directory():
     bundled=resources()/'models/sam2-tiny'
     return Path(os.environ.get('CUTOUT_PREP_MODEL_DIR',str(bundled)))
 
-def leaf_worker(source,output,size):
-    from cutout_prep import process_images
-    return process_images.main([source,'--output',output,'--size',str(size)])
+def leaf_worker(source,output,size,choices=None):
+    from cutout_prep import leaf_batch
+    return leaf_batch.prepare(source,output,int(size),choices)
 
 def check_runtime(output):
     """A file-based packaged-dependency check; no desktop or network needed."""
@@ -32,12 +32,12 @@ def check_runtime(output):
     return 0 if result['ok'] else 1
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--leaf-worker',nargs=3);p.add_argument('--check-runtime');p.add_argument('--project');p.add_argument('--smoke',action='store_true');args=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--leaf-worker',nargs=3);p.add_argument('--leaf-options',type=Path);p.add_argument('--check-runtime');p.add_argument('--project');p.add_argument('--smoke',action='store_true');args=p.parse_args()
     if args.check_runtime:return check_runtime(args.check_runtime)
     if args.leaf_worker:
         Path(args.leaf_worker[1]).mkdir(parents=True,exist_ok=True)
         with (Path(args.leaf_worker[1])/'Leaf Worker.log').open('w',encoding='utf-8') as log,contextlib.redirect_stdout(log),contextlib.redirect_stderr(log):
-            try:return leaf_worker(*args.leaf_worker)
+            try:return leaf_worker(*args.leaf_worker,choices=json.loads(args.leaf_options.read_text(encoding='utf-8')) if args.leaf_options else None)
             except Exception:traceback.print_exc();return 1
     import tkinter as tk
     from tkinter import ttk,filedialog,messagebox
@@ -377,12 +377,23 @@ def main():
             self.root.after(150,self.poll)
         def build_leaf_tab(self,ttk,tk,filedialog,messagebox):
             self.leaf_source=tk.StringVar();self.leaf_output=tk.StringVar();self.leaf_size=tk.IntVar(value=4096)
+            self.leaf_orient=tk.BooleanVar(value=True);self.leaf_align=tk.BooleanVar(value=True);self.leaf_lighting=tk.BooleanVar(value=True)
+            self.leaf_preserve=tk.BooleanVar(value=False)
+            self.leaf_choices={};self.leaf_review=None
             bar=ttk.Frame(self.leaf_tab);bar.pack(fill='x',pady=6)
             self.leaf_load=ttk.Button(bar,text='Load photo folder…',command=self.choose_leaf_folder);self.leaf_load.pack(side='left',padx=3)
             self.leaf_run=ttk.Button(bar,text='Process cutouts',command=self.run_leaf);self.leaf_run.pack(side='left',padx=3)
             self.leaf_results_button=ttk.Button(bar,text='Show cutout results',command=self.open_leaf_output);self.leaf_results_button.pack(side='left',padx=3)
             more=ttk.Menubutton(bar,text='More options');more.pack(side='right',padx=3)
             menu=tk.Menu(more,tearoff=False);more.configure(menu=menu)
+            self.leaf_menu=menu
+            menu.add_command(label='Review leaf orientation and front/back pairs…',command=self.review_leaves)
+            menu.add_checkbutton(label='Preserve existing artwork colors and alpha',variable=self.leaf_preserve,command=self.update_leaf_style)
+            menu.add_checkbutton(label='Turn clear leaf stems downward',variable=self.leaf_orient)
+            menu.add_checkbutton(label='Align named front/back leaf pairs',variable=self.leaf_align)
+            menu.add_checkbutton(label='Balance brightness and shadows',variable=self.leaf_lighting)
+            menu.add_command(label='Load saved leaf settings…',command=self.choose_leaf_recipe)
+            menu.add_separator()
             menu.add_command(label='Choose a different save folder…',command=self.choose_leaf_output)
             size=tk.Menu(menu,tearoff=False)
             for value in [1024,2048,4096,8192]:size.add_radiobutton(label=f'{value} × {value} pixels',variable=self.leaf_size,value=value)
@@ -392,6 +403,7 @@ def main():
             self.leaf_source.trace_add('write',lambda *_:self.update_controls())
             self.leaf_output.trace_add('write',lambda *_:self.update_controls())
             ttk.Label(self.leaf_tab,text='Load a photo folder, then choose Process cutouts. Results save in a new folder beside your photos.',wraplength=900).pack(anchor='w',pady=12,padx=3)
+            self.leaf_description=ttk.Label(self.leaf_tab,text='Leaf photographs: brightness/shadow preparation, plain-background cleanup, protected interiors and optional stem/pair geometry. Review choices under More options.',wraplength=900);self.leaf_description.pack(anchor='w',padx=3,pady=(0,12))
             ttk.Label(self.leaf_tab,text='Photo folder:').pack(anchor='w',padx=3)
             ttk.Label(self.leaf_tab,textvariable=self.leaf_source,wraplength=900).pack(anchor='w',padx=12,pady=(0,12))
             ttk.Label(self.leaf_tab,text='Results folder:').pack(anchor='w',padx=3)
@@ -405,12 +417,54 @@ def main():
             except OSError:
                 output=filedialog.askdirectory(title='Choose where to save the cutouts',parent=self.root)
                 if not output:return
-            self.leaf_source.set(folder);self.leaf_output.set(str(output))
+            self.leaf_choices={};self.leaf_source.set(folder);self.leaf_output.set(str(output))
             self.status.set('Photo folder loaded. Choose Process cutouts; original photos stay untouched.')
         def choose_leaf_output(self):
             if self.busy:return
             folder=filedialog.askdirectory(title='Choose a separate folder for cutout results',parent=self.root)
-            if folder:self.leaf_output.set(folder)
+            if folder:
+                try:
+                    from cutout_prep import leaf_batch
+                    report=Path(folder)/leaf_batch.REPORT
+                    if report.is_file():
+                        saved=leaf_batch._read_report(report,Path(self.leaf_source.get()).resolve())
+                        choices=leaf_batch.options(saved['options']);self.leaf_choices=choices
+                        self.leaf_orient.set(choices['orient_stems']);self.leaf_align.set(choices['align_pairs']);self.leaf_lighting.set(choices['balance_lighting'])
+                        self.leaf_preserve.set(choices['preserve_artwork']);self.update_leaf_style()
+                    self.leaf_output.set(folder)
+                except Exception as exc:self.fail(exc)
+        def choose_leaf_recipe(self):
+            path=filedialog.askopenfilename(title='Choose image-settings.json for leaf preparation',filetypes=[('Photo preparation settings','*.json')],parent=self.root)
+            if path:
+                try:
+                    from cutout_prep.process_images import read_settings
+                    read_settings(Path(path));self.leaf_choices['recipe']=path
+                    self.status.set('Saved leaf settings selected. Their per-photo choices take priority over automatic orientation.')
+                except Exception as exc:self.fail('Choose a photo-preparation recipe (image-settings.json). '+str(exc))
+        def leaf_options(self):
+            from cutout_prep import leaf_batch
+            return leaf_batch.options({**self.leaf_choices,'orient_stems':bool(self.leaf_orient.get()),'align_pairs':bool(self.leaf_align.get()),'balance_lighting':bool(self.leaf_lighting.get()),'preserve_artwork':bool(self.leaf_preserve.get())})
+        def update_leaf_style(self):
+            preserve=self.leaf_preserve.get()
+            if preserve:self.leaf_orient.set(False);self.leaf_align.set(False);self.leaf_lighting.set(False)
+            for label in ('Turn clear leaf stems downward','Align named front/back leaf pairs','Balance brightness and shadows'):
+                self.leaf_menu.entryconfigure(label,state='disabled' if preserve else 'normal')
+            self.leaf_description.configure(text='Prepared artwork: supplied colors, transparency and separate alpha pieces are kept. Automatic photo cleanup and geometry are disabled; explicit review choices can still be applied.' if preserve else 'Leaf photographs: brightness/shadow preparation, plain-background cleanup, protected interiors and optional stem/pair geometry. Review choices under More options.')
+        def review_leaves(self):
+            if self.busy:return
+            if not self.leaf_source.get() or not self.leaf_output.get():return self.fail('Load a leaf photo folder first.')
+            try:
+                from cutout_prep.leaf_review import LeafReviewDialog
+                choices=self.leaf_options();report=Path(self.leaf_output.get())/'LeafPreparation.json'
+                if not self.leaf_choices and report.is_file():
+                    saved=json.loads(report.read_text(encoding='utf-8'))
+                    if saved.get('input_root')==str(Path(self.leaf_source.get()).resolve()):choices={**saved['options'],**{k:choices[k] for k in ('orient_stems','align_pairs','balance_lighting','preserve_artwork')}}
+                self.leaf_review=LeafReviewDialog(self.root,self.leaf_source.get(),self.leaf_output.get(),choices,self.apply_leaf_choices)
+            except Exception as exc:self.fail(exc)
+        def apply_leaf_choices(self,choices):
+            self.leaf_choices=choices;self.leaf_orient.set(choices['orient_stems']);self.leaf_align.set(choices['align_pairs']);self.leaf_lighting.set(choices['balance_lighting'])
+            self.leaf_preserve.set(choices['preserve_artwork']);self.update_leaf_style()
+            self.run_leaf()
         def open_leaf_output(self):
             output=self.leaf_output.get()
             if output and Path(output).is_dir():webbrowser.open(Path(output).resolve().as_uri())
@@ -418,15 +472,25 @@ def main():
             source=self.leaf_source.get();output=self.leaf_output.get();size=self.leaf_size.get()
             if not Path(source).is_dir() or not output:return self.fail('Choose both a photo folder and an output folder.')
             if Path(source).resolve()==Path(output).resolve():return self.fail('Choose an output folder separate from the original photo folder.')
+            choices=self.leaf_options()
             def work():
                 Path(output).mkdir(parents=True,exist_ok=True)
-                command=([sys.executable] if getattr(sys,'frozen',False) else [sys.executable,'-m','cutout_prep.desktop'])+['--leaf-worker',source,output,str(size)]
+                descriptor,request=tempfile.mkstemp(prefix='.leaf-request-',suffix='.json',dir=output)
+                with os.fdopen(descriptor,'w',encoding='utf-8') as stream:json.dump(choices,stream)
+                command=([sys.executable] if getattr(sys,'frozen',False) else [sys.executable,'-m','cutout_prep.desktop'])+['--leaf-worker',source,output,str(size),'--leaf-options',request]
                 flags=subprocess.CREATE_NO_WINDOW if os.name=='nt' else 0
-                self.events.put(('status','Preparing leaf/image cutouts. This batch runs to completion.'))
-                with (Path(output)/'Cutout App.log').open('w',encoding='utf-8') as log:
-                    self.child=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,creationflags=flags);code=self.child.wait();self.child=None
+                self.events.put(('status','Preparing artwork with supplied colors and transparency. This batch runs to completion.' if choices['preserve_artwork'] else 'Preparing lighting, cutouts and leaf orientation/pairs. This batch runs to completion.'))
+                try:
+                    with (Path(output)/'Cutout App.log').open('w',encoding='utf-8') as log:
+                        self.child=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT,creationflags=flags);code=self.child.wait();self.child=None
+                finally:
+                    if Path(request).resolve().is_relative_to(Path(output).resolve()):Path(request).unlink(missing_ok=True)
                 if code not in (0,2):raise RuntimeError('Cutout processing stopped. See Cutout App.log in the output folder.')
-                self.events.put(('status','Cutouts prepared. Inspect Preview.jpg and ProcessingReport.json in the output folder.'))
+                report=json.loads((Path(output)/'ProcessingReport.json').read_text(encoding='utf-8'));leaf=json.loads((Path(output)/'LeafPreparation.json').read_text(encoding='utf-8'))
+                count=report['counts'].get('processed',0)+report['counts'].get('unchanged',0);review=report['counts'].get('review_required',0)
+                pairs=sum(p['status'] in ('aligned','saved') for p in leaf['pairs']);errors=report['counts'].get('error',0)
+                issue=f'; {errors} could not be processed' if errors else ''
+                self.events.put(('status',f'Prepared {count} cutouts and {pairs} front/back pairs; {review} need review{issue}. Choose Show cutout results, or More options → Review leaf orientation and front/back pairs.'))
             self.run(work);self.cancel_button.configure(state='disabled')
         def close(self):
             if self.busy:

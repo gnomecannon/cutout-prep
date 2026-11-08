@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.3.0 — leaf preparation and pair review
+
+- Connect the established leaf background, interior protection and color pipeline
+  to conservative stem-down orientation and explicit-name front/back alignment.
+- Preserve existing per-photo recipes, skipped views, natural holes and each
+  photographed outline; flag weak pairs instead of forcing a shape match.
+- Add native review controls for quarter-turn orientation, unlabeled pairs,
+  separate views and saved choices, with protected regeneration of owned outputs.
+- Plan geometry with temporary previews; render final textures from original
+  captures rather than reusing preview texture pixels. Retain the original
+  one-pass route when geometry automation and explicit choices are disabled.
+- Keep scan-mask processing and original scan photo bytes unchanged.
+
 ## 0.2.2 — simpler desktop workflow
 
 - Make the main actions Load photo folder and Process photos; save ready scan
