@@ -48,7 +48,8 @@ foreground recall stayed above 99.9%. Some backing remained. These are reference
 recovery measurements on composites, not general real-photo accuracy.
 
 Small branch gaps, soft hair, shadows, cropped subjects and overlapping clutter
-still need inspection. A source photograph can hide or merge surfaces that
+still need inspection. Small detached background specks can remain when keeping
+all foreground pieces. A source photograph can hide or merge surfaces that
 cannot be recovered faithfully. Processing success and a model score are not
 visual acceptance. The 3D scan-mask workflow and source photo bytes/framing are
 unchanged; this does not repair mesh slabs or recover physical roughness.

@@ -8,6 +8,23 @@ online case group, source/license records and a repeatable before/after review.
 
 ## Automated and packaged checks
 
+- Version 0.4 passed 78 regression tests on native Windows and Apple Silicon
+  macOS, with one Windows symlink-privilege skip. The added cases protect bright
+  opaque glints, real holes, narrow stems, disconnected subjects and supplied
+  alpha. Windows/macOS/Linux CI also passed. Native Tk exercises verified saved
+  detailed-method and separate-piece choices, edited rotations/pairs, changed
+  outputs and reopened choices. Picker return values were supplied.
+- Both 0.4 portable builds passed inference with their bundled detailed-cutout
+  model as well as the existing scan/tracking runtime and leaf pair/holes checks.
+  Readable and compiled application content passed the private-identifier audit.
+  These are packaging/workflow checks; real-image limitations are documented in
+  [the 2D pipeline](2D_MASKING.md) and [the photo comparisons](REAL_PHOTO_TESTS.md).
+- Both 0.4 portable apps processed the pinned 18-image corpus at 1536 pixels,
+  preserving source hashes. This includes 15 opaque captures and three
+  supplied-alpha preservation controls. A separate five-photo private leaf
+  trial at 4096 pixels preserved the originals, aligned the matching RAW pair
+  and kept the incompatible pair independent. The fine sprig still has small
+  residual backing/specks; these trials are not universal acceptance.
 - At the v0.3.0 release, 66 regression tests passed locally, covering the existing image processor,
   original-byte preservation, EXIF mask orientation, full-size exports, protected
   manual changes, project locks, review/tracking behavior and fresh default result
@@ -44,9 +61,9 @@ segmentation and tracking algorithms; these are not new mask-accuracy trials.
 
 ## Leaf preparation trials
 
-The leaf background, hole-protection, shadow and color modules were compared with
+At version 0.3, the leaf background, hole-protection, shadow and color modules were compared with
 the established preparation tool; those algorithms were already shared. This
-release adds orchestration and native correction controls, rather than claiming
+release added orchestration and native correction controls, rather than claiming
 a new background-removal or lighting algorithm.
 
 Five private photographs were tested at 4096 output pixels: three high-resolution
