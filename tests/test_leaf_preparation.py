@@ -8,18 +8,14 @@ import unittest
 
 import cv2
 import numpy as np
-from PIL import Image, ImageDraw
+from PIL import Image
 
 from cutout_prep import leaf_batch, leaf_geometry, pair_alignment, process_images
+from tools.shape_fixtures import specimen
 
 
 def leaf():
-    image = Image.new('RGBA', (512, 512))
-    draw = ImageDraw.Draw(image)
-    draw.ellipse((135, 40, 375, 355), fill=(58, 110, 38, 255))
-    draw.rectangle((249, 320, 263, 487), fill=(80, 90, 30, 255))
-    draw.ellipse((180, 140, 220, 180), fill=(0, 0, 0, 0))
-    return np.array(image)
+    return np.array(specimen('damaged'))
 
 
 class LeafGeometryTests(unittest.TestCase):

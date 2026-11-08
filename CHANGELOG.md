@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased — representative validation
+
+- Exercise lobed/serrated leaves, branches, narrow stems, irregular holes and
+  discolored tissue in regression, native workflow and portable checks.
+- Add licensed, pinned online photo cases and a reproducible visual-review
+  runner that keeps failures visible and verifies original/export bytes.
+- Separate extraction quality, supplied-alpha preservation and software checks;
+  document real-photo failures without changing the extraction algorithm.
+
 ## 0.3.0 — leaf preparation and pair review
 
 - Connect the established leaf background, interior protection and color pipeline

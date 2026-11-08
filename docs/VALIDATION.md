@@ -2,9 +2,13 @@
 
 Checks establish specific behaviors, not a general mask-accuracy score.
 
+Rounded dependency probes and successful UI tests do not establish real cutout
+quality. The [real-photo review protocol](REAL_PHOTO_TESTS.md) provides a pinned
+online case group, source/license records and a repeatable before/after review.
+
 ## Automated and packaged checks
 
-- 66 regression tests passed locally, covering the existing image processor,
+- At the v0.3.0 release, 66 regression tests passed locally, covering the existing image processor,
   original-byte preservation, EXIF mask orientation, full-size exports, protected
   manual changes, project locks, review/tracking behavior and fresh default result
   folders that preserve earlier work. One Windows symlink
@@ -25,7 +29,8 @@ Checks establish specific behaviors, not a general mask-accuracy score.
   pairing, rejection of incompatible outlines, clear-stem quarter-turns, saved
   recipe authority and skipped views. The native workflow also edits orientation,
   assigns an unlabeled pair, processes again, verifies changed pixels and reopens
-  the saved choices. Portable checks include a real bundled leaf-pair fit.
+  the saved choices. Portable checks exercise the bundled leaf-pair fitting
+  code with procedural silhouettes; this is not real-photo quality evidence.
 - The desktop artwork route matches the established artwork preset, including
   translucent color and disconnected supplied alpha pieces. A missing per-photo
   mask is reported without blocking unrelated valid photographs.

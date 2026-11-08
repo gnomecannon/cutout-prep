@@ -7,16 +7,19 @@ import argparse,hashlib,json,os,sys,time,traceback
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
+from shape_fixtures import photograph
 
 
 def main():
     p=argparse.ArgumentParser();p.add_argument('--output',required=True);p.add_argument('--model-dir',required=True);a=p.parse_args()
     output=Path(a.output).resolve()
     if output.exists():raise SystemExit('Use a new, empty validation output path.')
-    output.mkdir(parents=True);photos=output/'Inputs';photos.mkdir()
-    from PIL import Image,ImageDraw
+    output.mkdir(parents=True);photos=output/'Scan Inputs';photos.mkdir();leaf_photos=output/'Leaf Inputs';leaf_photos.mkdir()
+    from PIL import Image
     for i in range(3):
-        im=Image.new('RGB',(1000,900),'#ece7dc');d=ImageDraw.Draw(im);d.ellipse((240+i*6,180,760+i*6,760),fill=(65+i*3,112,62));im.save(photos/f'fixture-{i}.png')
+        # Tracking is a sequence of the same specimen, not three different leaves.
+        photograph('lobed',offset=i*3).resize((1000,900),Image.Resampling.LANCZOS).save(photos/f'fixture-{i}.png')
+        photograph('serrated' if i==0 else 'lobed',mirror=i==2).save(leaf_photos/f'fixture-{i}.png')
     source=str(Path(__file__).resolve().parents[1]/'src');sys.path.insert(0,source)
     os.environ['PYTHONPATH']=source+os.pathsep+os.environ.get('PYTHONPATH','')
     os.environ['CUTOUT_PREP_MODEL_DIR']=str(Path(a.model_dir).resolve())
@@ -24,7 +27,7 @@ def main():
     import tkinter as tk
     from tkinter import ttk,filedialog,messagebox
     from cutout_prep import desktop,scan_core as core
-    real_tk=tk.Tk;real_button=ttk.Button;captured={};result={'picker_results_supplied':True,'native_picker_interaction_tested':False};phase=[0];deadline=time.monotonic()+240
+    real_tk=tk.Tk;real_button=ttk.Button;captured={};result={'picker_results_supplied':True,'native_picker_interaction_tested':False,'fixture_scope':'procedural lobed/serrated leaves; workflow checks, not real-photo accuracy'};phase=[0];deadline=time.monotonic()+240
     def button(*args,**kwargs):
         owner=getattr(kwargs.get('command'),'__self__',None)
         if owner is not None and owner.__class__.__name__=='App':captured['app']=owner
@@ -73,7 +76,7 @@ def main():
                     assert core.digest(app.project.root/'Prepared Photos'/row['file'])==row['source_sha256']
                     with Image.open(app.project.root/'Prepared Photos'/row['mask']) as im:assert list(im.size)==row['raw_size']
                 result['scan_exports_verified']=3
-                with patch.object(filedialog,'askdirectory',return_value=str(photos)) as picker:app.choose_leaf_folder()
+                with patch.object(filedialog,'askdirectory',return_value=str(leaf_photos)) as picker:app.choose_leaf_folder()
                 assert picker.call_count==1 and Path(app.leaf_output.get()).parent==photos.parent
                 app.leaf_size.set(1024);app.run_leaf()
             elif n==7:
