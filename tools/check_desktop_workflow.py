@@ -3,7 +3,7 @@
 This tests authoring/save/reopen/cancel/export/leaf integration, not human picker
 interaction. Run with the desktop dependencies and a local model available.
 """
-import argparse,json,os,sys,time,traceback
+import argparse,hashlib,json,os,sys,time,traceback
 from pathlib import Path
 from types import SimpleNamespace
 from unittest.mock import patch
@@ -78,7 +78,23 @@ def main():
                 app.leaf_size.set(1024);app.run_leaf()
             elif n==7:
                 report=json.loads((Path(app.leaf_output.get())/'ProcessingReport.json').read_text());assert report['counts'].get('processed')==3,report['counts']
-                result['leaf_outputs_verified']=3;urls=[]
+                result['leaf_outputs_verified']=3
+                target=Path(app.leaf_output.get())/'fixture-0_BaseColor.png';captured['leaf_before']=hashlib.sha256(target.read_bytes()).hexdigest()
+                app.review_leaves();dialog=app.leaf_review
+                dialog.photo_var.set('fixture-0.png');dialog.show_photo();dialog.rotation_var.set('Turn right 90°');dialog.set_rotation()
+                dialog.front_var.set('fixture-1.png');dialog.back_var.set('fixture-2.png');dialog.add_pair();dialog.apply()
+            elif n==8:
+                report=json.loads((Path(app.leaf_output.get())/'LeafPreparation.json').read_text())
+                assert report['options']['rotations']['fixture-0.png']==90
+                assert report['options']['pairs']==[{'front':'fixture-1.png','back':'fixture-2.png'}]
+                assert report['counts']['aligned_pairs']==1,report['pairs']
+                target=Path(app.leaf_output.get())/'fixture-0_BaseColor.png';assert hashlib.sha256(target.read_bytes()).hexdigest()!=captured['leaf_before']
+                saved_output=app.leaf_output.get();app.leaf_choices={}
+                with patch.object(filedialog,'askdirectory',return_value=saved_output):app.choose_leaf_output()
+                assert app.leaf_choices['rotations']['fixture-0.png']==90
+                app.review_leaves();dialog=app.leaf_review;assert dialog.rotation_var.get()=='Turn right 90°';dialog.close()
+                result.update(native_leaf_choices_save_reopen=True,explicit_pair_choices_verified=True)
+                urls=[]
                 with patch.object(desktop.webbrowser,'open',side_effect=lambda url:urls.append(url)):app.guide()
                 assert urls and (desktop.resources()/'Guide.html').is_file()
                 result.update(ok=True,box_points_undo=True,save_reopen=True,edge_setting_persisted=True,guide_resource_verified=True)

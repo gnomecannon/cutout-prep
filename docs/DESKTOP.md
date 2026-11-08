@@ -54,6 +54,14 @@ automatically. Use **Show cutout results** to inspect the preview and report.
 Image size (4096 pixels by default) and a save-folder override are in **More options**. Existing
 manually changed exports remain protected. See [USAGE.md](USAGE.md) for recipes.
 
+Clear stems are oriented downward and named Front/Back/Rear views are aligned
+automatically when their outlines fit well. Saved per-photo geometry takes
+priority. Use **More options → Review leaf orientation and front/back pairs**
+to choose rotations, assign unlabeled pairs, keep views separate and process
+again. Saved choices reload when reopening the existing results folder.
+Lighting, automatic orientation and automatic pairing have separate switches
+in More options. See [LEAVES.md](LEAVES.md) for limitations and processing cost.
+
 ## Build from source
 
 Use Python **3.12 with Tk** and a separate environment. A binary must be built on

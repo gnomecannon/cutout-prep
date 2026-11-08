@@ -4,7 +4,7 @@ Checks establish specific behaviors, not a general mask-accuracy score.
 
 ## Automated and packaged checks
 
-- 57 regression tests passed locally, covering the existing image processor,
+- 66 regression tests passed locally, covering the existing image processor,
   original-byte preservation, EXIF mask orientation, full-size exports, protected
   manual changes, project locks, review/tracking behavior and fresh default result
   folders that preserve earlier work. One Windows symlink
@@ -21,13 +21,49 @@ Checks establish specific behaviors, not a general mask-accuracy score.
   saving after acceptance, one-picker leaf cutouts, and primary controls fitting
   the minimum window size. Windows main-screen, menu and leaf layouts were also
   observed through the native app. Human native-picker selection remains unverified.
+- Leaf checks cover protected regeneration, color/real-hole parity, explicit-name
+  pairing, rejection of incompatible outlines, clear-stem quarter-turns, saved
+  recipe authority and skipped views. The native workflow also edits orientation,
+  assigns an unlabeled pair, processes again, verifies changed pixels and reopens
+  the saved choices. Portable checks include a real bundled leaf-pair fit.
+- The desktop artwork route matches the established artwork preset, including
+  translucent color and disconnected supplied alpha pieces. A missing per-photo
+  mask is reported without blocking unrelated valid photographs.
 - Original photo hashes and exported source pixel dimensions were checked.
   An automatic Ready label does not establish a pixel-perfect silhouette.
 
 ## Real photo-group trials
 
-These trials were recorded for 0.2.1. The 0.2.2 interface keeps the same underlying
+These scan trials were recorded for 0.2.1. Later interfaces keep the same underlying
 segmentation and tracking algorithms; these are not new mask-accuracy trials.
+
+## Leaf preparation trials
+
+The leaf background, hole-protection, shadow and color modules were compared with
+the established preparation tool; those algorithms were already shared. This
+release adds orchestration and native correction controls, rather than claiming
+a new background-removal or lighting algorithm.
+
+Five private photographs were tested at 4096 output pixels: three high-resolution
+RAW views and two incompatible front/rear photographs. A RAW pair's mirrored
+whole-outline overlap improved from 0.819 to 0.941; an incompatible pair at 0.717
+was kept independent and flagged. A multi-tip sprig had ambiguous stem direction
+and retained its photographed orientation. A separate real RAW trial honored its
+saved quarter-turn recipe through the one-pass route. All source hashes remained
+unchanged. Existing asset-library exports and recipes were read-only.
+
+The five-photo geometry trial took about six minutes on the local CPU and all
+five extractions retained their existing background-review flags. The separate
+one-pass RAW trial took about 52 seconds. These are small case studies, not a
+general accuracy or performance benchmark. The earlier prepared and newly
+prepared front were visually compared; natural rear-outline differences remain.
+No private leaf photographs, recipes, filenames or trial output are published.
+
+An exploratory mask-only transfer of the leaf cleaner to three light-box rock
+views preserved original photo hashes, metadata framing and mask dimensions,
+but retained parts of the enclosure even with a focused analysis region. That
+candidate failed visual isolation and is not included. The normal 3D-scan
+subject-selection workflow remains in use.
 
 | Group | Photos | Automatic outcome | Observed limitation |
 | --- | ---: | --- | --- |

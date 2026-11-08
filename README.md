@@ -35,6 +35,12 @@ photos. The leaf tab needs only **Load photo folder → Process cutouts**. Less
 common settings and corrections are under **More options** and **Adjust this
 selection**. Earlier output folders are preserved.
 
+Leaf mode also balances brightness/shadows, protects enclosed leaf tissue,
+orients clear stems downward and aligns unambiguous `Front`/`Back` or `Rear`
+filename pairs in a common frame. **More options → Review leaf orientation and
+front/back pairs** provides manual rotations and pairing for unlabeled captures.
+Uncertain shapes stay independent and are flagged. [Leaf preparation guide](docs/LEAVES.md).
+
 This is not a new segmentation algorithm or an unattended reconstruction tool.
 It packages an artist-oriented workflow around existing models. Supports, wires,
 fine structures, reflections and complex backgrounds remain difficult. Inspect

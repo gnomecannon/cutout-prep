@@ -14,7 +14,7 @@ unneeded video encoders from the app and avoids publishing builder home paths.
 The OpenCV algorithm source is unmodified; the compilation options and binary
 diagnostic-string redactions are recorded in that recipe.
 
-The release includes a companion **CutoutPrep-DependencySources-0.2.2.zip**.
+The release includes a companion **CutoutPrep-DependencySources-0.3.0.zip**.
 It contains the matching libheif, libde265, LibRaw and FFmpeg sources and relevant
 wheel source/build material. Its manifest records source URLs, versions and
 SHA-256 digests. This source material is supplied alongside the binaries,
