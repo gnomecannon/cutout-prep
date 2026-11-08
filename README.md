@@ -18,6 +18,7 @@ retained crossing wires remain visible. [Source, method and limitations](docs/VA
 [Download Windows / Apple Silicon Mac apps](https://github.com/gnomecannon/cutout-prep/releases)
 · [Desktop guide and source build](docs/DESKTOP.md)
 · [Validation and limitations](docs/VALIDATION.md)
+· [Repeatable real-photo cutout tests](docs/REAL_PHOTO_TESTS.md)
 
 Portable apps include the local SAM 2.1 Tiny model and run on the CPU. No GPU,
 Python setup, online account or paid API is needed to use them. Photographs are
@@ -45,6 +46,11 @@ This is not a new segmentation algorithm or an unattended reconstruction tool.
 It packages an artist-oriented workflow around existing models. Supports, wires,
 fine structures, reflections and complex backgrounds remain difficult. Inspect
 masks even when marked Ready. See [alternatives](docs/ALTERNATIVES.md).
+
+In leaf/image mode, detailed branching can retain backing even on a plain
+background. Textured backing can select the wrong region, and pale edges can
+lose detail. The [real-photo review](docs/REAL_PHOTO_TESTS.md) records useful,
+partial and failed cases separately from automated workflow checks.
 
 ## AI development disclosure
 

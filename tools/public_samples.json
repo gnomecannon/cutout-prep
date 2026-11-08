@@ -85,7 +85,7 @@
   },
   {
     "file": "07-aster.jpg",
-    "use_case": "Many fine petals",
+    "use_case": "Overlapping broad yellow petals and concave joins",
     "mode": "photo",
     "title": "Aster flower head (54914780595).jpg",
     "source_page": "https://commons.wikimedia.org/wiki/File:Aster_flower_head_(54914780595).jpg",
@@ -108,7 +108,8 @@
     "original_sha1": "811bf3dc8bf7b895e43418d91dc11e0be789ac44",
     "license": "CC BY-SA 4.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "credit": "Uoaei1"
+    "credit": "Uoaei1",
+    "sha256": "2653e872c0c02afa608b23a720d470f766825092f59876408ce55ee7ab426d94"
   },
   {
     "file": "09-white-feather.jpg",
@@ -121,7 +122,8 @@
     "original_sha1": "2e9eb592baa08b9191e2f3742bcbe07e0fde0d71",
     "license": "Public domain",
     "license_url": null,
-    "credit": "Joao Estevao Andrade de Freitas"
+    "credit": "Joao Estevao Andrade de Freitas",
+    "sha256": "c20067eaa0115bbdf72763ddc9e3ed6b10cb481fc747986a5d74e5eebd12e32b"
   },
   {
     "file": "10-feather-duster.jpg",
@@ -134,7 +136,8 @@
     "original_sha1": "7358ad3906f312b94ae364325c71f0ef23be01f6",
     "license": "CC BY 3.0",
     "license_url": "https://creativecommons.org/licenses/by/3.0",
-    "credit": "freebie.photography"
+    "credit": "freebie.photography",
+    "sha256": "855dcfec4aa6f32b8ba8f85eb8cb0664b25cf0dd7891a3fe91440b410c5b1ee3"
   },
   {
     "file": "11-coal.jpg",
@@ -147,7 +150,8 @@
     "original_sha1": "81c2a0fbfcea050c9693d7e71b472ec837abefd2",
     "license": "CC BY 3.0",
     "license_url": "https://creativecommons.org/licenses/by/3.0",
-    "credit": "Thomas Bresson"
+    "credit": "Thomas Bresson",
+    "sha256": "e54cce54be07e990d64d9109baefba572b062895675b41bc13485a84dd07f1f0"
   },
   {
     "file": "12-amethyst.jpg",
@@ -160,7 +164,8 @@
     "original_sha1": "30cca86026f8beb0fae198940d04a19c6db971e3",
     "license": "CC BY 2.0",
     "license_url": "https://creativecommons.org/licenses/by/2.0",
-    "credit": "Jarno from Rotterdam, Netherlands"
+    "credit": "Jarno from Rotterdam, Netherlands",
+    "sha256": "f86373db16c08e15a41f0f22b56931646cde8f669b279df0f52115ce54bd21bf"
   },
   {
     "file": "13-shell.jpg",
@@ -173,7 +178,8 @@
     "original_sha1": "e3f4ed0b6724df92077053dbb3779f1d59a12a93",
     "license": "CC BY-SA 3.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/3.0",
-    "credit": "H. Zell"
+    "credit": "H. Zell",
+    "sha256": "41a44ab528a7226e5268fb44c6d33900a60cb8a8983fc1d8e5bac0f413500de0"
   },
   {
     "file": "14-multiple-almonds.jpg",
@@ -186,7 +192,8 @@
     "original_sha1": "3ac2921a943a62278d227a8952b1f24ce270a7da",
     "license": "CC BY-SA 4.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "credit": "Ivar Leidus"
+    "credit": "Ivar Leidus",
+    "sha256": "c459dfeff9b82e9d89900812032d7a2be08573626a145c5df9274d7539653fd1"
   },
   {
     "file": "15-outdoor-leaf.jpg",
@@ -199,7 +206,8 @@
     "original_sha1": "852e97d7bfd1bcaffae2f963ed105af12632c409",
     "license": "CC BY-SA 4.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "credit": "Chris Light"
+    "credit": "Chris Light",
+    "sha256": "4ce56edad0cedabf5a778ec0f99f0df8614e974c9489296b2d53713773af6646"
   },
   {
     "file": "16-skeleton.png",
@@ -212,7 +220,8 @@
     "original_sha1": "7303ff743a0a1c277a5b242c794941ad816a0577",
     "license": "CC BY-SA 4.0",
     "license_url": "https://creativecommons.org/licenses/by-sa/4.0",
-    "credit": "Ganesh Mohan T"
+    "credit": "Ganesh Mohan T",
+    "sha256": "fddb21e1cc5f80ab2143481852602375b0e57fa9f79b36ee16ed32d7e67a2d64"
   },
   {
     "file": "17-flower-alpha.png",
@@ -225,7 +234,8 @@
     "original_sha1": "380bab8d25ad25531f49263da122c837a29304b4",
     "license": "CC0",
     "license_url": "http://creativecommons.org/publicdomain/zero/1.0/deed.en",
-    "credit": "YuriNikolai"
+    "credit": "YuriNikolai",
+    "sha256": "f347ea575b04c894bd33fcacfe9d698f273cefa809a0ce5ea50d9d2df837cb0a"
   },
   {
     "file": "18-line-art-alpha.png",
@@ -238,6 +248,7 @@
     "original_sha1": "9cc81e0de985653738c72447bb9d133d22b6bd5d",
     "license": "Public domain",
     "license_url": null,
-    "credit": "Pearson Scott Foresman"
+    "credit": "Pearson Scott Foresman",
+    "sha256": "66c10e4c5e4afa8b8ce2d04667fd4005be0a09237b47b96bcc87957e58fdffec"
   }
 ]
