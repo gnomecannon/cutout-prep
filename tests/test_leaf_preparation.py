@@ -92,7 +92,9 @@ class LeafBatchTests(unittest.TestCase):
                 self.assertIn(process_images.main([str(source), '--output', str(root/'Baseline'), '--size', '512', '--padding', '20']), (0, 2))
                 # A saved framing preference remains authoritative.
                 (source/'image-settings.json').write_text(json.dumps({'defaults': {'padding': 20}}))
-                self.assertIn(leaf_batch.prepare(source, root/'Improved', 512, {'orient_stems': False, 'align_pairs': False}), (0, 2))
+                # The original single-subject cleanup remains available; the
+                # newer default also retains separate foreground pieces.
+                self.assertIn(leaf_batch.prepare(source, root/'Improved', 512, {'orient_stems': False, 'align_pairs': False,'keep_separate_objects':False}), (0, 2))
             baseline = np.array(Image.open(root/'Baseline/Leaf_Front_BaseColor.png'))
             output = root/'Improved/Leaf_Front_BaseColor.png'
             np.testing.assert_array_equal(np.array(Image.open(output)), baseline)

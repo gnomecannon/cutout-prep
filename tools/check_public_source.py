@@ -14,7 +14,7 @@ def main():
         path=root/name
         if not path.is_file():continue
         count+=1;data=path.read_bytes()
-        if path.suffix.lower() in {'.safetensors','.heic','.heif','.dng','.rsproj','.rcproj','.pem','.key'} or path.name in {'Scan Project.json','Export Report.json','ProcessingReport.json'}:findings.append({'file':name,'reason':'private/generated input type'})
+        if path.suffix.lower() in {'.safetensors','.onnx','.heic','.heif','.dng','.rsproj','.rcproj','.pem','.key'} or path.name in {'Scan Project.json','Export Report.json','ProcessingReport.json'}:findings.append({'file':name,'reason':'private/generated input type'})
         if any(re.search(pattern,data) for pattern in patterns) or any(s.encode().lower() in data.lower() for s in a.forbid):findings.append({'file':name,'reason':'potential private identifier or secret'})
     print(json.dumps({'source_files_checked':count,'findings':findings},indent=2))
     return 1 if findings else 0

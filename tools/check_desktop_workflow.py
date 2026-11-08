@@ -78,6 +78,7 @@ def main():
                 result['scan_exports_verified']=3
                 with patch.object(filedialog,'askdirectory',return_value=str(leaf_photos)) as picker:app.choose_leaf_folder()
                 assert picker.call_count==1 and Path(app.leaf_output.get()).parent==photos.parent
+                assert app.leaf_method.get()=='auto' and app.leaf_keep_pieces.get()
                 app.leaf_size.set(1024);app.run_leaf()
             elif n==7:
                 report=json.loads((Path(app.leaf_output.get())/'ProcessingReport.json').read_text());assert report['counts'].get('processed')==3,report['counts']
@@ -90,13 +91,16 @@ def main():
                 report=json.loads((Path(app.leaf_output.get())/'LeafPreparation.json').read_text())
                 assert report['options']['rotations']['fixture-0.png']==90
                 assert report['options']['pairs']==[{'front':'fixture-1.png','back':'fixture-2.png'}]
+                assert report['options']['cutout_method']=='auto' and report['options']['keep_separate_objects']
                 assert report['counts']['aligned_pairs']==1,report['pairs']
                 target=Path(app.leaf_output.get())/'fixture-0_BaseColor.png';assert hashlib.sha256(target.read_bytes()).hexdigest()!=captured['leaf_before']
                 saved_output=app.leaf_output.get();app.leaf_choices={}
+                app.leaf_method.set('classic');app.leaf_keep_pieces.set(False)
                 with patch.object(filedialog,'askdirectory',return_value=saved_output):app.choose_leaf_output()
                 assert app.leaf_choices['rotations']['fixture-0.png']==90
+                assert app.leaf_method.get()=='auto' and app.leaf_keep_pieces.get()
                 app.review_leaves();dialog=app.leaf_review;assert dialog.rotation_var.get()=='Turn right 90°';dialog.close()
-                result.update(native_leaf_choices_save_reopen=True,explicit_pair_choices_verified=True)
+                result.update(native_leaf_choices_save_reopen=True,explicit_pair_choices_verified=True,detailed_method_and_separate_pieces_save_reopen=True)
                 urls=[]
                 with patch.object(desktop.webbrowser,'open',side_effect=lambda url:urls.append(url)):app.guide()
                 assert urls and (desktop.resources()/'Guide.html').is_file()

@@ -1,0 +1,30 @@
+{
+  "schema": "cutout-prep-2d-model-1",
+  "repository": "onnx-community/BiRefNet_lite-ONNX",
+  "revision": "de15b22ba131738a16dff04aab8bdf8dc32e3ac1",
+  "upstream": "ZhengPeng7/BiRefNet_lite",
+  "upstream_revision": "aa62cd87eafb9cc43056d08ef3615a14628b831d",
+  "license": "MIT",
+  "files": {
+    "model.onnx": {
+      "bytes": 224005088,
+      "sha256": "5600024376f572a557870a5eb0afb1e5961636bef4e1e22132025467d0f03333",
+      "remote_name": "onnx/model.onnx"
+    },
+    "preprocessor_config.json": {
+      "bytes": 391,
+      "sha256": "447d9ccb2c4129ab0ca045fc293e7d79dbc45e293ac1e94818d865db77f65a54",
+      "remote_name": "preprocessor_config.json"
+    },
+    "config.json": {
+      "bytes": 81,
+      "sha256": "50acd2d700ee3d5facdcf3aab2312bb586372726dce8bdd5741bdae0ca6eb84f",
+      "remote_name": "config.json"
+    },
+    "README.md": {
+      "bytes": 4286,
+      "sha256": "95be7ac786fc40352e1405c397767af132e3e44f7eb6b924391bb145a2446542",
+      "remote_name": "README.md"
+    }
+  }
+}

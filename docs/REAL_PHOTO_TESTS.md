@@ -120,10 +120,46 @@ workflow. No 3D-scan masking or reconstruction conclusion follows from it.
 These cases establish repeatable targets for improvement: backing inside fine
 branch gaps, pale edge erosion, glints turned into false holes, and incorrect
 selection in textured clutter. The extraction algorithm and installed apps were
-not changed by this validation work.
+not changed by that baseline validation work.
 
 The expanded offline suite passed 69 tests on Windows, macOS and Linux (one
 Windows symlink-privilege skip). The revised native Windows workflow and
 installed portable topology checks also passed. The latter retained two
 irregular holes and a connected stem while fitting a lobed pair. These software
 checks remain separate from the real-photo findings above.
+
+## Version 0.4 comparison
+
+The [detailed 2D pipeline](2D_MASKING.md) was developed against these same pinned
+originals. The following observations are assistant visual inspection at
+comparison scale, not independent human acceptance. No per-image painted masks
+or manual result repairs were used. The three supplied-alpha cases remain
+preservation checks and must not be counted as extraction successes.
+
+Both native Windows x64 and Apple Silicon Mac portable apps processed all 18
+cases at 1536 output pixels, including all 15 opaque captures. Original and
+copied source hashes were unchanged. All inferred cutouts retain review flags.
+Producing 18 files does not mean every silhouette is production-ready.
+
+| Cases | Observed change and remaining limit |
+| --- | --- |
+| 01, 02, 07 | Broad leaf/flower outlines, points and stems remain useful at comparison scale. The tightly framed leaf apex is still a capture limitation. |
+| 03 fern | Most backing trapped between fronds removed. Small inner gaps and soft edges still need inspection. |
+| 04 dry leaf | Intended leaf and narrow stem recovered instead of the textured backing. |
+| 05 insect damage | Dense webbing recovered using the limited uniform-dark-backing fallback, with an explicit warning. Fine tissue/alpha still needs full-size review. |
+| 06 cone | More pale scale ends retained; source resolution still limits fine edges. |
+| 08 orchid | Pale petals, bud and main stem retained. Automatic stem orientation turns the group; disable it when capture orientation is desired. |
+| 09 white feather | Previously rejected feather now isolated. Fine barbs and soft coverage remain approximations. |
+| 10 duster | More outer strands retained, but the dense center is still mostly opaque and some gaps are lost. |
+| 11 coal | Bright glints remain opaque instead of becoming false holes. Inspect the contact edge and photographed material. |
+| 12 crystal | Previously rejected sample now produces a cutout. Cropped coverage and dark fissures remain ambiguous; physical transparency is unmeasured. |
+| 13 shells | All five views retained with improved silhouette boundaries. |
+| 14 almonds | All four subjects retained separately; the large bridge between the upper pair removed. |
+| 15 outdoor leaf | Intended leaf recovered instead of only the crossing twig. Overlapping twig/seed material remains where it touches or hides the leaf. |
+| 16–18 supplied alpha | Existing alpha/shape retained through photo preparation or artwork mode; no new extraction claim. |
+
+These cases show useful improvements without establishing a general success
+rate. Small background specks, narrow gaps, hair, contact shadows and occlusion
+can remain. The foreground model analyzes a 1024-pixel square and bounded edge
+refinement cannot restore arbitrary detail below its analysis scale. The scan
+workflow and reconstruction/material limitations are unchanged.

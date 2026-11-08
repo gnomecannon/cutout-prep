@@ -83,6 +83,8 @@ python3.12 -m venv .venv
 .venv/bin/python -m pip install -r requirements-desktop.txt
 .venv/bin/python -m pip install --no-deps -e .
 .venv/bin/python tools/download_model.py --output build/models/sam2-tiny
+.venv/bin/python -m pip install '.[cutout]'
+.venv/bin/python tools/download_model.py --kind cutout --output build/models/birefnet-lite
 ```
 
 On macOS, then replace the upstream OpenCV wheel with the image-only build:
@@ -102,7 +104,7 @@ CPU PyTorch wheels first from the official index to avoid downloading CUDA:
 Source runs require the local model directory to be explicitly selected:
 
 ```sh
-CUTOUT_PREP_MODEL_DIR="$PWD/build/models/sam2-tiny" .venv/bin/python -m cutout_prep.desktop
+CUTOUT_PREP_MODEL_DIR="$PWD/build/models/sam2-tiny" CUTOUT_PREP_2D_MODEL_DIR="$PWD/build/models/birefnet-lite" .venv/bin/python -m cutout_prep.desktop
 ```
 
 In PowerShell set `$env:CUTOUT_PREP_MODEL_DIR` to that directory, then run
@@ -110,7 +112,7 @@ In PowerShell set `$env:CUTOUT_PREP_MODEL_DIR` to that directory, then run
 
 ```text
 python -m unittest discover -s tests -v
-python tools/build_portable.py --dist dist/desktop --work build/desktop --model-dir build/models/sam2-tiny
+python tools/build_portable.py --dist dist/desktop --work build/desktop --model-dir build/models/sam2-tiny --cutout-model-dir build/models/birefnet-lite
 python tools/check_portable_runtime.py --app "dist/desktop/Cutout Prep/Cutout Prep.exe" --output build/portable-check
 ```
 

@@ -35,10 +35,10 @@ PREVIEW = 'Preview.jpg'
 DEFAULTS = {'size':4096, 'padding':96, 'exposure':'auto', 'target_median':0.25,
             'max_lift_ev':2.0, 'rotation_degrees':0, 'edge_decontaminate':True,
             'saturation':1.0, 'shadow_lift':0.45, 'raw_tone':'auto', 'name_prefix':'', 'background':'auto',
-            'components':'largest'}
+            'components':'largest','cutout_method':'auto'}
 PRESETS = {'photo':{}, 'artwork':{'background':'keep', 'exposure':'none', 'shadow_lift':0.0,
            'saturation':1.0, 'edge_decontaminate':False, 'components':'all', 'raw_tone':'neutral'}}
-PER_IMAGE = {'name', 'mask', 'rotation_degrees', 'exposure', 'saturation', 'shadow_lift', 'target_median', 'raw_tone', 'edge_decontaminate', 'skip', 'background', 'uv_transform', 'components'}
+PER_IMAGE = {'name', 'mask', 'rotation_degrees', 'exposure', 'saturation', 'shadow_lift', 'target_median', 'raw_tone', 'edge_decontaminate', 'skip', 'background', 'uv_transform', 'components','cutout_method'}
 RESERVED = {'CON','PRN','AUX','NUL',*(f'COM{i}' for i in range(1,10)),*(f'LPT{i}' for i in range(1,10))}
 
 def digest(data): return hashlib.sha256(data).hexdigest()
@@ -165,6 +165,7 @@ def load_image(path):
     return rgba,color_space,warnings
 
 def validate_options(options):
+    if options.get('cutout_method','auto') not in ('auto','detailed','classic'):raise ValueError('cutout_method must be auto, detailed or classic')
     size,padding=options['size'],options['padding']
     if type(size) is not int or not 64<=size<=8192:raise ValueError('size must be an integer from64 to8192')
     if type(padding) is not int or not 1<=padding<size//2:raise ValueError('padding must be positive and less than half the size')
@@ -219,7 +220,9 @@ def output_name(source, options):
 
 def exposure_curve(rgb, ev):
     gain=2**ev;peak=rgb.max(axis=2)
-    return rgb*(gain/(1+(gain-1)*peak))[:,:,None]
+    # The curve is bounded mathematically; float32 division can put a white
+    # glint one ULP above1 and incorrectly fail the shadow-stage input guard.
+    return np.clip(rgb*(gain/(1+(gain-1)*peak))[:,:,None],0,1)
 
 def median_luma(rgb,alpha,*,allow_translucent=False):
     selected=rgb[alpha>=192]
@@ -386,10 +389,15 @@ def read_input(src,options,folder):
             rgba[:,:,3]=np.round(rgba[:,:,3].astype(np.float32)*np.array(m)/255).astype(np.uint8)
         cutout={'method':'optional supplied mask','review_required':False}
     elif np.all(rgba[:,:,3]==255) and options['background']=='auto':
-        from .auto_cutout import extract
-        rgba,cutout=extract(rgba)
+        from . import neural_cutout
+        method=options.get('cutout_method','auto')
+        if method=='detailed' or (method=='auto' and (neural_cutout.available() or getattr(sys,'frozen',False))):
+            rgba,cutout=neural_cutout.extract(rgba)
+        else:
+            from .auto_cutout import extract
+            rgba,cutout=extract(rgba)
         warnings.extend(cutout['warnings'])
-        if options.get('components','largest')=='all':
+        if options.get('components','largest')=='all' and not cutout.get('model_sha256'):
             warnings.append('Automatic extraction selects one connected subject; components=all retains only islands supplied by that extraction. Use existing transparency or an explicit mask for multiple objects.')
     elif np.all(rgba[:,:,3]==255):
         cutout={'method':'opaque rectangular image retained explicitly','review_required':False}
@@ -423,7 +431,7 @@ def run(args):
     # Existing per-image overrides remain the final layer. CLI values override
     # JSON defaults, while the selected preset supplies only earlier defaults.
     defaults={**DEFAULTS,**PRESETS[preset],**settings.get('defaults',{})}
-    for key in ('size','padding','exposure','background','saturation','shadow_lift','target_median','raw_tone','components'):
+    for key in ('size','padding','exposure','background','saturation','shadow_lift','target_median','raw_tone','components','cutout_method'):
         if getattr(args,key,None) is not None:defaults[key]=getattr(args,key)
     validate_options(defaults)
     overrides=settings.get('images',{})
@@ -449,7 +457,7 @@ def run(args):
             raise ValueError('Malformed owned-output record; preserving existing output directory')
     profile_path=Path(__file__).with_name('sRGB.icc');profile=profile_path.read_bytes()
     environment=environment_provenance()
-    processor=digest(Path(__file__).read_bytes()+Path(__file__).with_name('__init__.py').read_bytes()+Path(__file__).with_name('auto_cutout.py').read_bytes()+Path(__file__).with_name('raw_decode.py').read_bytes()+Path(__file__).with_name('color_adjust.py').read_bytes()+Path(__file__).with_name('dng_profile.py').read_bytes()+Path(__file__).with_name('tone_normalize.py').read_bytes()+Path(__file__).with_name('pair_alignment.py').read_bytes()+profile+json_hash(environment).encode())
+    processor=digest(Path(__file__).read_bytes()+Path(__file__).with_name('__init__.py').read_bytes()+Path(__file__).with_name('auto_cutout.py').read_bytes()+Path(__file__).with_name('neural_cutout.py').read_bytes()+Path(__file__).with_name('raw_decode.py').read_bytes()+Path(__file__).with_name('color_adjust.py').read_bytes()+Path(__file__).with_name('dng_profile.py').read_bytes()+Path(__file__).with_name('tone_normalize.py').read_bytes()+Path(__file__).with_name('pair_alignment.py').read_bytes()+profile+json_hash(environment).encode())
     for name,record in outputs.items():
         pixel_key=record.get('pixel_key');path=output/name
         if not pixel_key or not path.is_file():continue
@@ -477,6 +485,8 @@ def run(args):
             rec['review_required']=cutout['review_required']
             signature_options=transform_options(options)
             signature_data={'processor':processor,'source':rec['source_sha256'],'mask':digest(mask_data),'settings':signature_options}
+            if cutout.get('model_sha256'):
+                signature_data['cutout_backend']={k:cutout[k] for k in ('model_sha256','runtime_version')}
             if raw_info is not None:
                 signature_data['raw_decoder']=raw_info['decoder_signature']
                 signature_data['raw_render']=raw_info.get('render_profile')
@@ -573,11 +583,12 @@ def main(argv=None):
     p.add_argument('--output',type=Path,help='Output directory; default INPUT/Processed')
     p.add_argument('--settings',type=Path,help='JSON settings; default INPUT/image-settings.json if present')
     p.add_argument('--preset',choices=tuple(PRESETS),default='photo',help='photo: automatic cleanup/color; artwork: retain supplied alpha islands and color; default photo')
-    p.add_argument('--components',choices=('largest','all'),help='Keep largest alpha subject (photo default) or all supplied islands (artwork default); automatic extraction still selects one object')
+    p.add_argument('--components',choices=('largest','all'),help='Keep largest alpha subject (CLI photo default) or all foreground pieces; classic extraction selects one object')
     p.add_argument('--size',type=int,help='Square output size; default4096')
     p.add_argument('--padding',type=int,help='Empty pixels on each end of longest subject axis; default96')
     p.add_argument('--exposure',type=str,help='auto, none or EV number; default auto, lift capped at2EV')
     p.add_argument('--background',choices=['auto','keep'],help='Automatically cut out opaque photos (default) or keep their rectangular frame')
+    p.add_argument('--cutout-method',choices=['auto','detailed','classic'],help='auto: use installed detailed model, otherwise classic plain-background cleanup; detailed requires the verified local model')
     p.add_argument('--saturation',type=float,help='Perceptual chroma multiplier0 to2; default1 preserves rendered chroma')
     p.add_argument('--target-median',type=float,help='Minimum subject median sRGB luminance for auto exposure; default0.25')
     p.add_argument('--raw-tone',choices=['auto','neutral'],help='Use a supported embedded DNG tone profile (default auto) or neutral RAW development')

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "cutout-prep"
-version = "0.3.0"
+version = "0.4.0"
 description = "Offline scan masks and image cutouts for photogrammetry and game assets."
 readme = "README.md"
 requires-python = ">=3.10"
@@ -31,6 +31,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+cutout = ["onnxruntime>=1.20,<2"]
 raw = ["rawpy>=0.27.1,<0.28"]
 scan = ["torch==2.15.0", "torchvision==0.29.2", "transformers==5.22.2", "safetensors==0.8.0", "pi-heif==1.4.0"]
 dev = ["build>=1.2,<2"]

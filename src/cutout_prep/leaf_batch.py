@@ -20,7 +20,8 @@ from . import __version__, leaf_geometry as geometry, pair_alignment, process_im
 REPORT = 'LeafPreparation.json'
 SCHEMA = 'cutout-prep-leaf-preparation-1'
 DEFAULT_OPTIONS = {'orient_stems': True, 'align_pairs': True, 'balance_lighting': True,
-                   'preserve_artwork': False, 'rotations': {}, 'pairs': [], 'ignored_pairs': [], 'recipe': None}
+                   'preserve_artwork': False, 'keep_separate_objects': True, 'cutout_method':'auto',
+                   'rotations': {}, 'pairs': [], 'ignored_pairs': [], 'recipe': None}
 
 
 def relative_name(value):
@@ -34,11 +35,13 @@ def options(value=None):
     if not isinstance(value, dict) or set(value) - set(DEFAULT_OPTIONS):
         raise ValueError('Unrecognized leaf preparation options.')
     result = {**copy.deepcopy(DEFAULT_OPTIONS), **copy.deepcopy(value)}
-    for key in ('orient_stems', 'align_pairs', 'balance_lighting', 'preserve_artwork'):
+    for key in ('orient_stems', 'align_pairs', 'balance_lighting', 'preserve_artwork','keep_separate_objects'):
         if type(result[key]) is not bool:
             raise ValueError(f'{key} must be true or false.')
     if result['preserve_artwork']:
-        result.update(orient_stems=False,align_pairs=False,balance_lighting=False)
+        result.update(orient_stems=False,align_pairs=False,balance_lighting=False,keep_separate_objects=True)
+    if result['cutout_method'] not in ('auto','detailed','classic'):
+        raise ValueError('Choose automatic detailed or classic background removal')
     if not isinstance(result['rotations'], dict) or not isinstance(result['pairs'], list):
         raise ValueError('Invalid saved leaf orientation or pairs.')
     for name, angle in result['rotations'].items():
@@ -104,6 +107,9 @@ def _prepare(source, destination, size, selected, settings, defaults, recipe):
     padding = defaults['padding'];analysis_size = min(size, 1024)
     analysis_padding = max(1, round(padding * analysis_size / size))
     lighting = ['--preset','artwork' if selected['preserve_artwork'] else 'photo']
+    lighting += ['--cutout-method',selected['cutout_method']]
+    if 'components' not in settings.get('defaults',{}):
+        lighting += ['--components','all' if selected['keep_separate_objects'] else 'largest']
     if not selected['balance_lighting']:lighting += ['--exposure', 'none', '--shadow-lift', '0']
     mask_hashes = {}
     configured = [settings.get('defaults', {}), *settings.get('images', {}).values()]

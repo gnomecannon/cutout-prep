@@ -28,6 +28,7 @@ LeafPairRebuild.json
 # Local models, projects and scan output are never part of the source release.
 models/
 *.safetensors
+*.onnx
 *.heic
 *.HEIC
 *.heif
