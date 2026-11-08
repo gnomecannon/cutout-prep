@@ -23,16 +23,19 @@ in [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md).
 
 ## Development provenance versus runtime behavior
 
-AI was used to develop this software. The released processing pipeline itself
-uses deterministic image-processing operations on the local CPU. It does not
-call an AI service, download a model, generate replacement texture detail, or
-upload photographs. Installing Python dependencies requires their normal package
-downloads.
+AI was used to develop this software. The desktop also uses pretrained models
+locally: SAM 2.1 for scan selections and BiRefNet Lite for detailed 2D cutouts.
+Their weights and CPU runtimes are included in portable downloads. Processing
+does not call an AI service, download model code, generate replacement texture
+detail, or upload photographs. Source setup downloads dependencies and pinned
+model files separately. Captured color remains the texture source.
 
 ## Desktop scan workflow
 
 The desktop GUI, scan-mask processing, review fixes and packaging were also
 implemented with AI assistance under the same disclosure. The scan workflow
-uses the third-party SAM 2.1 model locally for inference. The traditional image
-cutout processor remains a separate workflow. Reported regression/runtime tests
-do not establish universal mask quality or independent expert acceptance.
+uses the third-party SAM 2.1 model locally for inference. The image-cutout
+workflow uses BiRefNet Lite by default in portable builds; the older plain
+background extractor remains available. Model predictions can omit subjects,
+retain backing or lose fine detail. Reported regression/runtime tests do not
+establish universal mask quality or independent expert acceptance.

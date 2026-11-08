@@ -55,3 +55,17 @@ the linked software projects remain separately licensed.
 Procedural demonstrations are labelled as such. Any public photographic example
 has its own source/credit record. Private development photographs, project assets,
 local paths and processing reports are excluded from the source and app releases.
+## Detailed 2D cutouts: BiRefNet Lite and ONNX Runtime
+
+The desktop includes the MIT-licensed BiRefNet Lite checkpoint by Peng Zheng
+and co-authors, converted to ONNX by the ONNX Community. The original weights
+are published at <https://huggingface.co/ZhengPeng7/BiRefNet_lite>; the pinned
+conversion is <https://huggingface.co/onnx-community/BiRefNet_lite-ONNX>.
+The exact revision, file hashes and source filenames are recorded in
+`tools/cutout-model-manifest.json`. The model's MIT notice is retained in
+`tools/BiRefNet-LICENSE` and beside the packaged weights. No third-party model
+Python code is downloaded or executed by the app.
+
+ONNX Runtime is provided under the MIT License. Its license and dependency
+notices are collected with the other runtime licenses in portable builds.
+CPU inference runs locally; there is no image upload or paid inference service.

@@ -1,8 +1,8 @@
 # Leaf preparation
 
 The desktop leaf tab keeps the normal **Load photo folder → Process cutouts**
-workflow. Brightness/shadow preparation and plain-background cleanup use the
-established image processor. This is prepared photographic color, not measured
+workflow. Portable builds use detailed object segmentation and edge refinement;
+brightness/shadow preparation uses the established image processor. This is prepared photographic color, not measured
 albedo or recovery of clipped detail.
 
 ## Automatic geometry
@@ -58,11 +58,18 @@ translucency and separate alpha pieces are retained, and automatic photo cleanup
 lighting and geometry are disabled. Explicit rotation/pair choices can still be
 applied. Per-photo recipes remain authoritative.
 
-Interior protection belongs to the opaque-photo extractor. It restores enclosed
+The detailed method locks confirmed foreground interiors during edge refinement,
+so bright glints do not become color-derived holes. Predicted gaps remain open;
+there is no blanket hole filling. **Keep separate objects and small pieces** is
+enabled by default. Several separate subjects keep their photographed orientation.
+Per-photo component choices and supplied alpha/masks retain their priority.
+
+**More options → Background removal method → Simple background (older method)**
+selects the previous extractor. Its interior protection restores enclosed
 tissue when the photograph does not support a paper-colored hole, while retaining
 convincing photographed holes. Supplied transparency and masks remain authored
 inputs. Real damage, complex overlap and paper that resembles the leaf can still
-need correction; this release does not claim a new general segmentation method.
+need correction. See [the detailed 2D pipeline](2D_MASKING.md) for remaining limits.
 
 ## Processing and privacy
 

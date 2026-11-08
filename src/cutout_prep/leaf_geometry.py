@@ -44,6 +44,10 @@ def stem_direction(alpha):
     mask = cv2.resize(alpha, (round(w * scale), round(h * scale)), interpolation=cv2.INTER_AREA) >= 128
     if not mask.any():
         return {'clockwise_degrees': 0, 'confident': False, 'reason': 'No opaque subject'}
+    labels,count=ndi.label(mask,np.ones((3,3)))
+    sizes=np.bincount(labels.ravel())[1:]
+    if np.count_nonzero(sizes>max(12,mask.sum()*.025))>1:
+        return {'clockwise_degrees':0,'confident':False,'reason':'Several separate subjects; photo orientation kept'}
     mask = pair_alignment._largest(mask, cv2)
     radius = max(3, round(max(mask.shape) * .018))
     kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (2 * radius + 1,) * 2)

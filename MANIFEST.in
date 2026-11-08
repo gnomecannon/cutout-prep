@@ -5,5 +5,5 @@ recursive-include examples *.py *.md *.png *.jpg
 recursive-include tests *.py
 
 include requirements-desktop.txt
-recursive-include tools *.py *.sh *.json SAM2-LICENSE
+recursive-include tools *.py *.sh *.json SAM2-LICENSE BiRefNet-LICENSE
 recursive-include src/cutout_prep/resources *.html

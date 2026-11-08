@@ -1,6 +1,20 @@
 # Changelog
 
-## Unreleased — representative validation
+## 0.4.0 — detailed 2D cutouts
+
+- Use a pinned local BiRefNet Lite model and bounded edge refinement for opaque
+  photo cutouts. Keep solid interiors opaque while retaining predicted gaps.
+- Recover incomplete fine-material predictions only when uniform dark backing
+  is supported by source contrast, with an explicit review flag.
+- Keep separate foreground objects/pieces by default; preserve authored alpha
+  and masks, artwork color controls, recipes and protected manual exports.
+- Add descriptive background-method and separate-piece options under More options.
+  Keep uncertain multi-object orientation unchanged.
+- Fix a floating-point white-highlight overshoot that could stop shadow cleanup.
+- Bundle the CPU runtime/model and notices on Windows and Apple Silicon Mac.
+  Original 3D scan photographs and scan-mask processing remain unchanged.
+
+### Representative validation
 
 - Exercise lobed/serrated leaves, branches, narrow stems, irregular holes and
   discolored tissue in regression, native workflow and portable checks.

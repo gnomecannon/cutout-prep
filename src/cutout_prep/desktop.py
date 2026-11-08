@@ -379,6 +379,7 @@ def main():
             self.leaf_source=tk.StringVar();self.leaf_output=tk.StringVar();self.leaf_size=tk.IntVar(value=4096)
             self.leaf_orient=tk.BooleanVar(value=True);self.leaf_align=tk.BooleanVar(value=True);self.leaf_lighting=tk.BooleanVar(value=True)
             self.leaf_preserve=tk.BooleanVar(value=False)
+            self.leaf_method=tk.StringVar(value='auto');self.leaf_keep_pieces=tk.BooleanVar(value=True)
             self.leaf_choices={};self.leaf_review=None
             bar=ttk.Frame(self.leaf_tab);bar.pack(fill='x',pady=6)
             self.leaf_load=ttk.Button(bar,text='Load photo folder…',command=self.choose_leaf_folder);self.leaf_load.pack(side='left',padx=3)
@@ -389,6 +390,11 @@ def main():
             self.leaf_menu=menu
             menu.add_command(label='Review leaf orientation and front/back pairs…',command=self.review_leaves)
             menu.add_checkbutton(label='Preserve existing artwork colors and alpha',variable=self.leaf_preserve,command=self.update_leaf_style)
+            method_menu=tk.Menu(menu,tearoff=False)
+            method_menu.add_radiobutton(label='Detailed subjects (recommended)',variable=self.leaf_method,value='auto')
+            method_menu.add_radiobutton(label='Simple background (older method)',variable=self.leaf_method,value='classic')
+            menu.add_cascade(label='Background removal method',menu=method_menu)
+            menu.add_checkbutton(label='Keep separate objects and small pieces',variable=self.leaf_keep_pieces)
             menu.add_checkbutton(label='Turn clear leaf stems downward',variable=self.leaf_orient)
             menu.add_checkbutton(label='Align named front/back leaf pairs',variable=self.leaf_align)
             menu.add_checkbutton(label='Balance brightness and shadows',variable=self.leaf_lighting)
@@ -403,7 +409,7 @@ def main():
             self.leaf_source.trace_add('write',lambda *_:self.update_controls())
             self.leaf_output.trace_add('write',lambda *_:self.update_controls())
             ttk.Label(self.leaf_tab,text='Load a photo folder, then choose Process cutouts. Results save in a new folder beside your photos.',wraplength=900).pack(anchor='w',pady=12,padx=3)
-            self.leaf_description=ttk.Label(self.leaf_tab,text='Leaf photographs: brightness/shadow preparation, plain-background cleanup, protected interiors and optional stem/pair geometry. Review choices under More options.',wraplength=900);self.leaf_description.pack(anchor='w',padx=3,pady=(0,12))
+            self.leaf_description=ttk.Label(self.leaf_tab,text='Photo cutouts: automatic background removal, balanced brightness/shadows and optional leaf orientation/pairing. Review choices under More options.',wraplength=900);self.leaf_description.pack(anchor='w',padx=3,pady=(0,12))
             ttk.Label(self.leaf_tab,text='Photo folder:').pack(anchor='w',padx=3)
             ttk.Label(self.leaf_tab,textvariable=self.leaf_source,wraplength=900).pack(anchor='w',padx=12,pady=(0,12))
             ttk.Label(self.leaf_tab,text='Results folder:').pack(anchor='w',padx=3)
@@ -430,7 +436,7 @@ def main():
                         saved=leaf_batch._read_report(report,Path(self.leaf_source.get()).resolve())
                         choices=leaf_batch.options(saved['options']);self.leaf_choices=choices
                         self.leaf_orient.set(choices['orient_stems']);self.leaf_align.set(choices['align_pairs']);self.leaf_lighting.set(choices['balance_lighting'])
-                        self.leaf_preserve.set(choices['preserve_artwork']);self.update_leaf_style()
+                        self.leaf_preserve.set(choices['preserve_artwork']);self.leaf_method.set(choices['cutout_method']);self.leaf_keep_pieces.set(choices['keep_separate_objects']);self.update_leaf_style()
                     self.leaf_output.set(folder)
                 except Exception as exc:self.fail(exc)
         def choose_leaf_recipe(self):
@@ -443,13 +449,13 @@ def main():
                 except Exception as exc:self.fail('Choose a photo-preparation recipe (image-settings.json). '+str(exc))
         def leaf_options(self):
             from cutout_prep import leaf_batch
-            return leaf_batch.options({**self.leaf_choices,'orient_stems':bool(self.leaf_orient.get()),'align_pairs':bool(self.leaf_align.get()),'balance_lighting':bool(self.leaf_lighting.get()),'preserve_artwork':bool(self.leaf_preserve.get())})
+            return leaf_batch.options({**self.leaf_choices,'orient_stems':bool(self.leaf_orient.get()),'align_pairs':bool(self.leaf_align.get()),'balance_lighting':bool(self.leaf_lighting.get()),'preserve_artwork':bool(self.leaf_preserve.get()),'cutout_method':self.leaf_method.get(),'keep_separate_objects':bool(self.leaf_keep_pieces.get())})
         def update_leaf_style(self):
             preserve=self.leaf_preserve.get()
-            if preserve:self.leaf_orient.set(False);self.leaf_align.set(False);self.leaf_lighting.set(False)
-            for label in ('Turn clear leaf stems downward','Align named front/back leaf pairs','Balance brightness and shadows'):
+            if preserve:self.leaf_orient.set(False);self.leaf_align.set(False);self.leaf_lighting.set(False);self.leaf_keep_pieces.set(True)
+            for label in ('Turn clear leaf stems downward','Align named front/back leaf pairs','Balance brightness and shadows','Background removal method','Keep separate objects and small pieces'):
                 self.leaf_menu.entryconfigure(label,state='disabled' if preserve else 'normal')
-            self.leaf_description.configure(text='Prepared artwork: supplied colors, transparency and separate alpha pieces are kept. Automatic photo cleanup and geometry are disabled; explicit review choices can still be applied.' if preserve else 'Leaf photographs: brightness/shadow preparation, plain-background cleanup, protected interiors and optional stem/pair geometry. Review choices under More options.')
+            self.leaf_description.configure(text='Prepared artwork: supplied colors, transparency and separate alpha pieces are kept. Automatic photo cleanup and geometry are disabled; explicit review choices can still be applied.' if preserve else 'Photo cutouts: automatic background removal, balanced brightness/shadows and optional leaf orientation/pairing. Review choices under More options.')
         def review_leaves(self):
             if self.busy:return
             if not self.leaf_source.get() or not self.leaf_output.get():return self.fail('Load a leaf photo folder first.')
@@ -458,12 +464,12 @@ def main():
                 choices=self.leaf_options();report=Path(self.leaf_output.get())/'LeafPreparation.json'
                 if not self.leaf_choices and report.is_file():
                     saved=json.loads(report.read_text(encoding='utf-8'))
-                    if saved.get('input_root')==str(Path(self.leaf_source.get()).resolve()):choices={**saved['options'],**{k:choices[k] for k in ('orient_stems','align_pairs','balance_lighting','preserve_artwork')}}
+                    if saved.get('input_root')==str(Path(self.leaf_source.get()).resolve()):choices={**saved['options'],**{k:choices[k] for k in ('orient_stems','align_pairs','balance_lighting','preserve_artwork','cutout_method','keep_separate_objects')}}
                 self.leaf_review=LeafReviewDialog(self.root,self.leaf_source.get(),self.leaf_output.get(),choices,self.apply_leaf_choices)
             except Exception as exc:self.fail(exc)
         def apply_leaf_choices(self,choices):
             self.leaf_choices=choices;self.leaf_orient.set(choices['orient_stems']);self.leaf_align.set(choices['align_pairs']);self.leaf_lighting.set(choices['balance_lighting'])
-            self.leaf_preserve.set(choices['preserve_artwork']);self.update_leaf_style()
+            self.leaf_preserve.set(choices['preserve_artwork']);self.leaf_method.set(choices['cutout_method']);self.leaf_keep_pieces.set(choices['keep_separate_objects']);self.update_leaf_style()
             self.run_leaf()
         def open_leaf_output(self):
             output=self.leaf_output.get()

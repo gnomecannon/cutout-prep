@@ -26,13 +26,13 @@ jobs:
             extras: dev
           - os: ubuntu-latest
             python: '3.12'
-            extras: 'dev,raw'
+            extras: 'dev,raw,cutout'
           - os: windows-latest
             python: '3.12'
-            extras: 'dev,raw'
+            extras: 'dev,raw,cutout'
           - os: macos-latest
             python: '3.12'
-            extras: 'dev,raw'
+            extras: 'dev,raw,cutout'
     env:
       OMP_NUM_THREADS: '2'
       OPENBLAS_NUM_THREADS: '2'
@@ -56,6 +56,9 @@ jobs:
       - name: Check RAW decoder extra
         if: contains(matrix.extras, 'raw')
         run: python -c "from cutout_prep.raw_decode import decoder; r=decoder(); print(r.__version__, r.libraw_version)"
+      - name: Check detailed cutout CPU runtime
+        if: contains(matrix.extras, 'cutout')
+        run: python -c "import onnxruntime as o; assert 'CPUExecutionProvider' in o.get_available_providers(); print(o.__version__)"
       - name: Build source and wheel distributions
         run: python -m build
       - name: Reinstall wheel without source import

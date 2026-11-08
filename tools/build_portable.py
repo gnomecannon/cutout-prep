@@ -5,7 +5,7 @@ from packaging.requirements import Requirement
 
 
 def main():
-    p=argparse.ArgumentParser();p.add_argument('--dist',required=True);p.add_argument('--work',required=True);p.add_argument('--model-dir',required=True);p.add_argument('--incremental',action='store_true');a=p.parse_args()
+    p=argparse.ArgumentParser();p.add_argument('--dist',required=True);p.add_argument('--work',required=True);p.add_argument('--model-dir',required=True);p.add_argument('--cutout-model-dir',required=True);p.add_argument('--incremental',action='store_true');a=p.parse_args()
     repo=Path(__file__).resolve().parents[1];package=repo/'src/cutout_prep';dist=Path(a.dist).resolve();work=Path(a.work).resolve();model=Path(a.model_dir).resolve();work.mkdir(parents=True,exist_ok=True)
     sys.path.insert(0,str(repo/'src'))
     from cutout_prep import __version__
@@ -18,8 +18,19 @@ def main():
     for name,row in manifest['files'].items():
         path=model/name
         if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=row['sha256']:raise SystemExit('Missing or mismatched model file: '+name)
+    cutout_manifest=json.loads((repo/'tools/cutout-model-manifest.json').read_text())
+    cutout_model=Path(a.cutout_model_dir).resolve();cutout_stage=work/'cutout-model'
+    cutout_stage.mkdir(exist_ok=True)
+    allowed=set(cutout_manifest['files'])|{'LICENSE','manifest.json'}
+    if any(p.name not in allowed or not p.is_file() for p in cutout_stage.iterdir()):raise SystemExit('Preserve unexpected detailed-model staging files')
+    for name,row in cutout_manifest['files'].items():
+        path=cutout_model/name
+        if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest()!=row['sha256']:raise SystemExit('Missing or mismatched detailed model file: '+name)
+        shutil.copy2(path,cutout_stage/name)
+    shutil.copy2(repo/'tools/BiRefNet-LICENSE',cutout_stage/'LICENSE')
+    (cutout_stage/'manifest.json').write_text(json.dumps(cutout_manifest,indent=2)+'\n',encoding='utf-8')
     licenses=work/'licenses';licenses.mkdir(exist_ok=True)
-    pending=['Pillow','numpy','opencv-python-headless','scipy','pi-heif','rawpy','torch','torchvision','transformers','safetensors','pyinstaller'];seen=set()
+    pending=['Pillow','numpy','opencv-python-headless','scipy','pi-heif','rawpy','torch','torchvision','transformers','safetensors','pyinstaller','onnxruntime'];seen=set()
     versions={}
     while pending:
         name=pending.pop();key=name.lower().replace('_','-')
@@ -37,11 +48,12 @@ def main():
     for candidate in [Path(sys.base_prefix)/'LICENSE.txt',Path(sys.base_prefix)/'LICENSE']:
         if candidate.is_file():shutil.copy2(candidate,licenses/'Python-LICENSE.txt');break
     data=[(model,'models/sam2-tiny'),(package/'resources/Guide.html','.'),(package/'sRGB.icc','cutout_prep'),(repo/'LICENSE','.'),(repo/'THIRD_PARTY_NOTICES.md','.'),(repo/'tools/SAM2-LICENSE','models/sam2-tiny'),(licenses,'licenses')]
+    data.append((cutout_stage,'models/birefnet-lite'))
     command=[sys.executable,'-m','PyInstaller','--noconfirm','--onedir','--windowed','--name','Cutout Prep','--distpath',str(dist),'--workpath',str(work/'pyinstaller'),'--specpath',str(work),'--paths',str(repo/'src'),'--additional-hooks-dir',str(repo/'tools/hooks')]
     if not a.incremental:command+=['--clean']
     if sys.platform=='darwin':command+=['--osx-bundle-identifier','io.github.gnomecannon.cutout-prep']
     for src,dest in data:command+=['--add-data',str(src)+os.pathsep+dest]
-    for module in ['cutout_prep.process_images','cutout_prep.scan_core','rawpy','pi_heif','scipy.ndimage','PIL._tkinter_finder','transformers.models.sam2.modeling_sam2','transformers.models.sam2.processing_sam2','transformers.models.sam2.image_processing_sam2','transformers.models.sam2.configuration_sam2']:
+    for module in ['cutout_prep.process_images','cutout_prep.scan_core','cutout_prep.neural_cutout','onnxruntime','rawpy','pi_heif','scipy.ndimage','PIL._tkinter_finder','transformers.models.sam2.modeling_sam2','transformers.models.sam2.processing_sam2','transformers.models.sam2.image_processing_sam2','transformers.models.sam2.configuration_sam2']:
         command+=['--hidden-import',module]
     for module in ['pillow_heif','pytest','IPython','notebook','tensorflow','jax','torchaudio','matplotlib','tensorboard']:
         command+=['--exclude-module',module]
@@ -58,7 +70,7 @@ def main():
         with info.open('wb') as f:plistlib.dump(metadata,f)
         subprocess.run(['codesign','--force','--deep','--sign','-',str(app)],check=True)
     for name,source in [('Guide.html',package/'resources/Guide.html'),('LICENSE',repo/'LICENSE'),('THIRD_PARTY_NOTICES.md',repo/'THIRD_PARTY_NOTICES.md')]:shutil.copy2(source,extras/name)
-    (extras/'BUILD_INFO.json').write_text(json.dumps({'version':__version__,'platform':platform.platform(),'architecture':platform.machine(),'python':platform.python_version(),'source_sha256':fingerprints,'packages':versions,'model':manifest,'opencv_profile':'image-only local build' if sys.platform=='darwin' else 'upstream Windows wheel'},indent=2)+'\n',encoding='utf-8')
+    (extras/'BUILD_INFO.json').write_text(json.dumps({'version':__version__,'platform':platform.platform(),'architecture':platform.machine(),'python':platform.python_version(),'source_sha256':fingerprints,'packages':versions,'model':manifest,'cutout_model':cutout_manifest,'opencv_profile':'image-only local build' if sys.platform=='darwin' else 'upstream Windows wheel'},indent=2)+'\n',encoding='utf-8')
     print(app)
 
 

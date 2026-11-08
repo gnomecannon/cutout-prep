@@ -20,14 +20,16 @@ retained crossing wires remain visible. [Source, method and limitations](docs/VA
 · [Validation and limitations](docs/VALIDATION.md)
 · [Repeatable real-photo cutout tests](docs/REAL_PHOTO_TESTS.md)
 
-Portable apps include the local SAM 2.1 Tiny model and run on the CPU. No GPU,
+Portable apps include SAM 2.1 Tiny for scan masks and BiRefNet Lite for detailed
+2D foreground removal. Both run locally on the CPU. No GPU,
 Python setup, online account or paid API is needed to use them. Photographs are
 not uploaded. Setup/build dependency downloads require internet.
 
 Scan masks support box/point selection, propagation through an ordered group,
 review/approval, saved projects, cancellation, JPEG/HEIC input and RealityScan
 mask naming. They preserve original photo bytes, metadata, framing, dimensions
-and EXIF orientation. The leaf tab uses the existing traditional image processor;
+and EXIF orientation. The leaf tab combines detailed object segmentation with
+edge refinement and the established color/image processor;
 it intentionally changes framing and must not be used on scan source photos.
 
 The normal scan workflow is **Load photo folder → draw a box around the subject
@@ -47,17 +49,18 @@ It packages an artist-oriented workflow around existing models. Supports, wires,
 fine structures, reflections and complex backgrounds remain difficult. Inspect
 masks even when marked Ready. See [alternatives](docs/ALTERNATIVES.md).
 
-In leaf/image mode, detailed branching can retain backing even on a plain
-background. Textured backing can select the wrong region, and pale edges can
-lose detail. The [real-photo review](docs/REAL_PHOTO_TESTS.md) records useful,
-partial and failed cases separately from automated workflow checks.
+Version 0.4 improves the real-photo failures with detailed foreground segmentation,
+protected solid interiors, edge cleanup and retained separate objects. Small
+gaps, fuzzy edges, shadows and overlap still need inspection. See the
+[2D pipeline and comparisons](docs/2D_MASKING.md) and the preserved
+[v0.3 real-photo baseline](docs/REAL_PHOTO_TESTS.md).
 
 ## AI development disclosure
 
 AI generated the original application code and tests under human requirements,
 design direction and visual review. There has been no independent human source
 or security audit. Scan mode runs Meta's pretrained segmentation model locally;
-the established leaf processor uses traditional image processing.
+2D cutouts use BiRefNet Lite plus traditional edge/color processing.
 [Full disclosure](AI_DISCLOSURE.md).
 
 ## Existing command-line image processor
@@ -119,7 +122,7 @@ decontamination. It still crops to the alpha bounds, resizes, centers, and pads.
 Explicit settings can override preset values.
 
 `--components all` preserves disconnected components of existing transparency.
-Automatic background extraction still selects one main object; this switch does
+Classic background extraction still selects one main object; this switch does
 not turn a photograph of several objects into a multi-object segmentation tool.
 
 ## Review and repeat
