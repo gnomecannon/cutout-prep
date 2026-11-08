@@ -8,6 +8,11 @@ online case group, source/license records and a repeatable before/after review.
 
 ## Automated and packaged checks
 
+- Version 0.4.1 passed the expanded 83-test source suite on native Windows and
+  Apple Silicon macOS (one Windows symlink-privilege skip). Added contracts cover
+  rejected-paper regrowth, retained colored branches/pale details and keeping
+  solid rock glints or pale subjects out of the conditional crop pass. Real fern
+  and held-out conifer comparisons are recorded in [REAL_PHOTO_TESTS.md](REAL_PHOTO_TESTS.md).
 - Version 0.4 passed 78 regression tests on native Windows and Apple Silicon
   macOS, with one Windows symlink-privilege skip. The added cases protect bright
   opaque glints, real holes, narrow stems, disconnected subjects and supplied

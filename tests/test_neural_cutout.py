@@ -89,3 +89,51 @@ class ReaderContracts(unittest.TestCase):
             self.assertEqual(ndi.label(alpha>=128,np.ones((3,3)))[1],2)
             saved=json.loads((root/'Results/LeafPreparation.json').read_text())
             self.assertTrue(saved['options']['keep_separate_objects'])
+
+
+class FineStructureContracts(unittest.TestCase):
+    def test_solid_rock_glints_do_not_trigger_local_resegmentation(self):
+        rgba=np.array(specimen('rock'));rgb=rgba[:,:,:3].copy();rgb[rgba[:,:,3]==0]=255
+        rgb[220:240,240:260]=255
+        backend=unittest.mock.Mock();backend.predict.side_effect=AssertionError('Solid material was resegmented')
+        prior=rgba[:,:,3].astype(np.float32)/255
+        actual,ceiling,evidence=neural_cutout.fine_structure(rgb,prior,backend)
+        np.testing.assert_array_equal(actual,prior);self.assertIsNone(ceiling)
+        self.assertEqual(evidence['fine_structure_tiles'],0)
+
+    def test_pale_subject_does_not_trigger_chromatic_paper_cleanup(self):
+        rgba=np.array(specimen('sprig'));rgb=np.full_like(rgba[:,:,:3],255);rgb[rgba[:,:,3]>0]=(240,242,238)
+        prior=ndi.binary_dilation(rgba[:,:,3]>0,iterations=1).astype(np.float32)
+        backend=unittest.mock.Mock();backend.predict.side_effect=AssertionError('Pale subject was resegmented')
+        actual,ceiling,_=neural_cutout.fine_structure(rgb,prior,backend)
+        np.testing.assert_array_equal(actual,prior);self.assertIsNone(ceiling)
+
+    def test_local_crops_remove_false_paper_without_losing_colored_branches_or_pale_detail(self):
+        rgba=np.array(specimen('sprig'));subject=rgba[:,:,3]>0;rgb=rgba[:,:,:3].copy();rgb[~subject]=255
+        # A pale detail belongs to the photographed subject, not the backing.
+        rgb[258:270,240:251]=(241,243,239);subject[258:270,240:251]=True
+        y,x=np.indices(subject.shape)
+        false_paper=ndi.binary_dilation(subject,iterations=1)&~subject&((x+y)%8==0)
+        prior=(subject|false_paper).astype(np.float32)
+        class LocalModel:
+            def predict(self,image):
+                keep=(image.min(axis=2)<250).astype(np.float32)
+                return np.asarray(Image.fromarray(keep).resize((1024,1024),Image.Resampling.BILINEAR))
+        actual,ceiling,evidence=neural_cutout.fine_structure(rgb,prior,LocalModel())
+        self.assertEqual(evidence['fine_structure_tiles'],4)
+        _,alpha,_=neural_cutout.refine(rgb,actual,coverage_ceiling=ceiling)
+        self.assertGreater(((alpha>=128)&subject).sum()/subject.sum(),.995)
+        self.assertLess(((alpha>=128)&~subject).sum(),((prior>=.5)&~subject).sum()*.1)
+        self.assertTrue(np.all(alpha[260:268,242:249]==255))
+
+    def test_edge_projection_cannot_grow_rejected_paper_back(self):
+        rgb=np.full((128,128,3),255,np.uint8);rgb[20:108,30:96]=(65,105,38)
+        rgb[45:80,60:63]=255;prior=np.zeros((128,128),np.float32);prior[20:108,30:96]=1
+        ceiling=np.ones_like(prior);ceiling[45:80,60:63]=0
+        _,alpha,_=neural_cutout.refine(rgb,prior,coverage_ceiling=ceiling)
+        self.assertTrue(np.all(alpha[45:80,60:63]==0))
+        self.assertTrue(np.all(alpha[25:40,40:80]==255))
+
+    def test_malformed_fine_coverage_is_rejected(self):
+        with self.assertRaisesRegex(ValueError,'fine-structure coverage'):
+            neural_cutout.refine(np.zeros((32,32,3),np.uint8),np.zeros((32,32)),coverage_ceiling=np.zeros((16,16)))
