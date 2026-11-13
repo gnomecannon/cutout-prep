@@ -137,3 +137,56 @@ class FineStructureContracts(unittest.TestCase):
     def test_malformed_fine_coverage_is_rejected(self):
         with self.assertRaisesRegex(ValueError,'fine-structure coverage'):
             neural_cutout.refine(np.zeros((32,32,3),np.uint8),np.zeros((32,32)),coverage_ceiling=np.zeros((16,16)))
+
+
+class PaperEdgeContracts(unittest.TestCase):
+    def scene(self):
+        rgb=np.full((80,80,3),255,np.uint8);alpha=np.zeros((80,80),np.uint8)
+        rgb[15:65,25:55]=(50,105,35);alpha[15:65,25:55]=255
+        return rgb,alpha
+
+    def test_partial_colored_coverage_is_recovered_without_opaque_changes_or_mask_growth(self):
+        rgb,alpha=self.scene();foreground=np.array([50,105,35],np.float32)/255
+        linear=np.where(foreground<=.04045,foreground/12.92,((foreground+.055)/1.055)**2.4)
+        mixed=.15*linear+.85
+        encoded=np.round(np.where(mixed<=.0031308,mixed*12.92,1.055*mixed**(1/2.4)-.055)*255).astype(np.uint8)
+        rgb[20:60,24]=encoded;alpha[20:60,24]=180
+        colors,result,info=neural_cutout.finish_paper_edges(rgb,rgb,alpha,[255,255,255])
+        self.assertGreater(info['paper_edge_pixels'],0)
+        self.assertTrue(np.all(np.abs(result[20:60,24].astype(float)-.15*255)<3))
+        # At low coverage, 8-bit capture rounding cannot uniquely recover the
+        # original dark RGB. The recovered color/alpha must recompose to the
+        # measured capture instead of requiring invented precision.
+        recovered=colors[20:60,24].astype(np.float32)/255
+        recovered=np.where(recovered<=.04045,recovered/12.92,((recovered+.055)/1.055)**2.4)
+        coverage=result[20:60,24].astype(np.float32)[:,None]/255
+        recomposed=coverage*recovered+(1-coverage)
+        recomposed=np.round(np.where(recomposed<=.0031308,recomposed*12.92,1.055*recomposed**(1/2.4)-.055)*255)
+        self.assertTrue(np.all(np.abs(recomposed-rgb[20:60,24].astype(float))<=2))
+        self.assertTrue(np.all(result<=alpha))
+        np.testing.assert_array_equal(colors[alpha>=242],rgb[alpha>=242])
+        np.testing.assert_array_equal(result[alpha>=242],alpha[alpha>=242])
+
+    def test_soft_neutral_paper_shadow_is_removed_at_the_existing_boundary(self):
+        rgb,alpha=self.scene();rgb[:,:25]=225;rgb[20:60,24]=225;alpha[20:60,24]=190
+        _,result,_=neural_cutout.finish_paper_edges(rgb,rgb,alpha,[255,255,255])
+        self.assertTrue(np.all(result[20:60,24]==0))
+        self.assertTrue(np.all(result[20:60,25:55]==255))
+
+    def test_pale_opaque_highlights_and_colored_thin_edges_are_preserved(self):
+        rgb,alpha=self.scene();rgb[30:35,26:30]=250
+        rgb[20:60,24]=(45,115,30);alpha[20:60,24]=190
+        colors,result,_=neural_cutout.finish_paper_edges(rgb,rgb,alpha,[255,255,255])
+        np.testing.assert_array_equal(colors,rgb);np.testing.assert_array_equal(result,alpha)
+
+    def test_enclosed_pale_tissue_without_a_paper_connection_is_preserved(self):
+        rgb,alpha=self.scene();rgb[35:40,38:43]=235;alpha[35:40,38:43]=170
+        colors,result,_=neural_cutout.finish_paper_edges(rgb,rgb,alpha,[255,255,255])
+        np.testing.assert_array_equal(colors,rgb);np.testing.assert_array_equal(result,alpha)
+
+    def test_weak_color_fit_can_reduce_paper_coverage_without_amplifying_color_noise(self):
+        rgb,alpha=self.scene();rgb[15:65,25:55]=(10,65,5)
+        rgb[30,24]=(250,253,244);alpha[30,24]=190
+        colors,result,_=neural_cutout.finish_paper_edges(rgb,rgb,alpha,[255,255,255])
+        self.assertLess(int(result[30,24]),128)
+        np.testing.assert_array_equal(colors[30,24],rgb[30,24])

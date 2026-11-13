@@ -49,6 +49,21 @@ and masks continue to bypass extraction. Qualifying captures take additional
 CPU inference time. Pale details, tiny structures and mixed materials still
 need visual review.
 
+## Fractional paper rims: 0.4.2
+
+Some fine edges still retained partly transparent white backing after the close
+views. Qualifying captures now receive a bounded finishing pass around those
+existing edges. It requires a neutral-paper connection to transparent backing,
+nearby opaque colored material and a supported foreground/background color fit.
+Nearby measured paper can account for soft contact shadows.
+
+The pass only reduces coverage below alpha 242 and within four analysis pixels
+of the existing boundary. Captured near-opaque material, enclosed pale tissue
+without a backing connection, and saturated colored edges remain unchanged.
+RGB unmixing requires the tighter color fit; weaker supported fits retain RGB
+while reducing coverage, avoiding amplification of capture/compression noise.
+It adds no model inference or user steps. Fine pale detail still needs review.
+
 ## Real-photo evidence and limits
 
 The [pinned online cases](REAL_PHOTO_TESTS.md) preserve the v0.3 baseline. Direct
