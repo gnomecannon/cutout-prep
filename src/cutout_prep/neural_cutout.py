@@ -204,6 +204,56 @@ def refine(rgb, prior, *, recover_dark=True, coverage_ceiling=None):
     return encoded,np.round(alpha*255).astype(np.uint8),{'dark_backing_recovery':False,'edge_rgb_pixels':int(changed.sum())}
 
 
+def finish_paper_edges(rgb, color, alpha, background_rgb):
+    """Unmix confirmed paper only at fractional edges of a fine subject.
+
+    Opaque captured material is never changed. The backing must connect to an
+    already transparent region and fit a nearby colored foreground/paper mix.
+    """
+    info={'paper_edge_pixels':0,'paper_edge_rgb_pixels':0}
+    values=rgb.astype(np.float32)/255;background=np.asarray(background_rgb,np.float32)/255
+    chroma=np.ptp(rgb,axis=2);coverage=alpha.astype(np.float32)/255
+    neutral=(chroma<=32)&(values.min(axis=2)>=float(background.min())-100/255)
+    paper=ndi.binary_propagation(neutral&(alpha<=32),mask=neutral)
+    depth=ndi.distance_transform_edt(alpha>=128)
+    candidates=paper&(alpha>2)&(alpha<242)&(depth<=4)
+    anchors=(alpha>=250)&(chroma>=40)&(values.min(axis=2)<float(background.min())-60/255)
+    if not candidates.any() or not anchors.any():return color,alpha,info
+    distance,indices=ndi.distance_transform_edt(~anchors,return_indices=True)
+    linear=np.where(values<=.04045,values/12.92,((values+.055)/1.055)**2.4)
+    backing=np.where(background<=.04045,background/12.92,((background+.055)/1.055)**2.4)
+    foreground=linear[indices[0],indices[1]];delta=foreground-backing
+    norm=np.sum(delta*delta,axis=2)
+    projection=np.clip(np.sum((linear-backing)*delta,axis=2)/np.maximum(norm,1e-6),0,1)
+    residual=np.linalg.norm(linear-(projection[:,:,None]*foreground+(1-projection[:,:,None])*backing),axis=2)
+    # Nearby transparent paper accounts for soft contact shadows. Use it only
+    # if it explains the captured color better than the measured bright mode.
+    known_backing=neutral&(alpha<=2)
+    if known_backing.any():
+        bd,bi=ndi.distance_transform_edt(~known_backing,return_indices=True)
+        local=linear[bi[0],bi[1]];local_delta=foreground-local;local_norm=np.sum(local_delta*local_delta,axis=2)
+        local_projection=np.clip(np.sum((linear-local)*local_delta,axis=2)/np.maximum(local_norm,1e-6),0,1)
+        local_residual=np.linalg.norm(linear-(local_projection[:,:,None]*foreground+(1-local_projection[:,:,None])*local),axis=2)
+        use_local=(bd<=12)&(local_norm>.02)&(local_residual<residual)
+        projection=np.where(use_local,local_projection,projection)
+        residual=np.where(use_local,local_residual,residual)
+        backing=np.where(use_local[:,:,None],local,backing)
+    supported=candidates&(distance<=8)&(norm>.02)&(residual<.12)
+    reduced=np.minimum(coverage,projection)
+    changed=supported&(reduced<coverage-1/255)
+    if not changed.any():return color,alpha,info
+    new_alpha=alpha.copy();new_alpha[changed]=np.round(reduced[changed]*255).astype(np.uint8)
+    new_alpha[new_alpha<3]=0
+    # A weaker fit may reduce coverage, but must not invent an edge color by
+    # amplifying compression noise. Only the tighter fit permits RGB unmixing.
+    rgb_changed=changed&(new_alpha>2)&(residual<.04)
+    recovered=np.clip((linear-(1-reduced[:,:,None])*backing)/np.maximum(reduced[:,:,None],.02),0,1)
+    encoded=np.clip(np.round(np.where(recovered<=.0031308,recovered*12.92,1.055*recovered**(1/2.4)-.055)*255),0,255).astype(np.uint8)
+    new_color=color.copy();new_color[rgb_changed]=encoded[rgb_changed]
+    info.update(paper_edge_pixels=int(changed.sum()),paper_edge_rgb_pixels=int(rgb_changed.sum()))
+    return new_color,new_alpha,info
+
+
 def extract(rgba, backend=None):
     backend=backend or predictor();rgb=rgba[:,:,:3];h,w=rgb.shape[:2]
     raw=backend.predict(rgb)
@@ -213,6 +263,10 @@ def extract(rgba, backend=None):
     prior,ceiling,fine_evidence=fine_structure(small,prior,backend)
     color,alpha,evidence=refine(small,prior,coverage_ceiling=ceiling)
     evidence.update(fine_evidence)
+    if ceiling is not None:
+        color,alpha,edge_evidence=finish_paper_edges(small,color,alpha,fine_evidence['paper_background_rgb'])
+        evidence.update(edge_evidence)
+        evidence['edge_rgb_pixels']+=edge_evidence['paper_edge_rgb_pixels']
     if not (alpha>=128).any():raise ValueError('Detailed cutout found no usable foreground')
     result=rgba.copy()
     result[:,:,3]=np.asarray(Image.fromarray(alpha).resize((w,h),Image.Resampling.LANCZOS)) if scale<1 else alpha

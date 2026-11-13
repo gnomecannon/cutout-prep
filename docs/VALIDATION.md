@@ -8,6 +8,10 @@ online case group, source/license records and a repeatable before/after review.
 
 ## Automated and packaged checks
 
+- Version 0.4.2 passed 88 source regressions on native Windows and Apple Silicon
+  macOS (one Windows symlink-privilege skip). New contracts cover fractional
+  color/alpha recomposition, paper contact shadows, unchanged near-opaque and
+  colored material, enclosed pale tissue and avoiding noise amplification.
 - Version 0.4.1 passed the expanded 83-test source suite on native Windows and
   Apple Silicon macOS (one Windows symlink-privilege skip). Added contracts cover
   rejected-paper regrowth, retained colored branches/pale details and keeping

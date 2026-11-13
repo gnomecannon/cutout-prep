@@ -184,3 +184,17 @@ foreground recall stayed above 99.99%. The six broad-leaf controls were unchange
 All other 14 opaque online captures were pixel-identical at the same bounded
 analysis input; pale flowers, the feather, shells and rock highlights kept their
 previous route. Supplied alpha remains a separate preservation control.
+
+## Version 0.4.2 finishing comparison
+
+The remaining fractional paper rims prompted a bounded edge-matte correction.
+Using the same fern color proxy and analysis resolution, retained bright neutral
+pixels fell from 168 to 13. At the masking stage, all existing pixels at alpha
+242 or higher kept their color and alpha exactly. The finishing pass does not
+guess replacement colors for weak fits; it only reduces their coverage.
+
+The held-out conifer composite improved background leakage from 1.785% to 1.745%
+with unchanged reference foreground recall (99.9925%). The six broad-leaf controls
+and the other 14 opaque online captures stayed pixel-identical at the same bounded
+inputs. These small case studies remain separate from independent visual acceptance;
+fine pale material, noise and reflections can remain ambiguous.

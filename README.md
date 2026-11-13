@@ -58,6 +58,8 @@ gaps, fuzzy edges, shadows and overlap still need inspection. See the
 Version 0.4.1 adds a conditional close-view pass for fine colorful subjects on
 bright neutral paper, reducing the white backing left around the test fern's
 leaflets. It does not apply a general white-color deletion rule.
+Version 0.4.2 adds a finishing pass for the remaining fractional paper rims,
+preserving near-opaque captured material and the same simple workflow.
 
 ## AI development disclosure
 

@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.4.2 — fractional paper-edge finishing
+
+- Finish small partly transparent paper rims after the conditional fine-subject
+  pass, using connected backing, nearby colored material and bounded color-fit
+  evidence. Near-opaque material and colored edges remain unchanged.
+- Account for nearby neutral paper shadows. Use the tighter fit for RGB
+  unmixing; weaker supported fits can only reduce coverage while retaining RGB.
+- Keep the same folder/process workflow, local models and dependencies.
+
 ## 0.4.1 — fine fronds on paper
 
 - Recheck thin, colorful subjects against measured bright neutral backing with
