@@ -86,6 +86,8 @@ own anchors; this does not join separate objects into one. Recovery distance,
 iterations and changed coverage are bounded. Ambiguous connections produce a
 review warning rather than an invented straight bridge. A sizeable pale region
 or a predominantly pale subject skips this route.
+New significant pieces split from an original predicted subject are also
+flagged when source color cannot support their reconnection.
 
 The offline real-photo test uses a recorded model prior and a separately reviewed
 accepted mask. At native 1952 × 1470 resolution, the automatic refinement has

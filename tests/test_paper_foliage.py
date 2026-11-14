@@ -76,5 +76,17 @@ class ApprovedFernContracts(unittest.TestCase):
         self.assertEqual(ndi.label(result>=128,structure=np.ones((3,3)))[1],before)
         self.assertFalse(result[:,400:420].any())
 
+    def test_a_connection_without_color_evidence_is_flagged_not_drawn(self):
+        rgb=self.rgb.copy()
+        # Perturb the source-visible narrow arc to neutral gray. The recorded
+        # object prior still connects it, but the color evidence no longer does.
+        area=rgb[130:210,1180:1220]
+        area[:]=area.mean(2,keepdims=True).astype(np.uint8)
+        _,alpha,info=paper_foliage.refine(rgb,self.prior,rgb,self.alpha,[255,255,255])
+        self.assertTrue(info['paper_foliage_applied'])
+        self.assertGreater(info['new_subject_splits'],0)
+        self.assertGreater(info['uncertain_connections'],0)
+        self.assertFalse(alpha[145:195,1190:1210].any())
+
 
 if __name__=='__main__':unittest.main()

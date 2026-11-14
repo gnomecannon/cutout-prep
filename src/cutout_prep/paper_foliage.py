@@ -178,8 +178,20 @@ def refine(rgb, prior, color, alpha, background_rgb):
         prepared[boundary]=rgb[nearest[0][boundary],nearest[1][boundary]]
     else: boundary=np.zeros((h,w),bool)
     _,component_sizes=_components(candidate>=128)
-    significant=int((component_sizes>=max(16,candidate.size*.00002)).sum())
+    minimum_piece=max(16,candidate.size*.00002)
+    significant=int((component_sizes>=minimum_piece).sum())
+    # Weakly colored/neutral connections can disappear from photographic
+    # evidence altogether. Detect new splits of an original predicted subject
+    # as well as failed repair attempts, without inventing a connecting bridge.
+    original_labels,original_sizes=_components(foreground)
+    result_labels,_=_components(candidate>=128)
+    new_splits=0
+    for original in np.flatnonzero(original_sizes>=minimum_piece):
+        ids,overlap=np.unique(result_labels[original_labels==original],return_counts=True)
+        pieces=[i for i,n in zip(ids,overlap) if i and n>=10 and component_sizes[i]>=minimum_piece]
+        new_splits+=max(0,len(pieces)-1)
+    connections['uncertain_connections']=max(connections['uncertain_connections'],new_splits)
     info.update(paper_foliage_applied=True,paper_saturation_cutoff=threshold,
                 paper_pocket_rim_pixels=int(rim.sum()),paper_subject_components=significant,
-                paper_contour_rgb_pixels=int(boundary.sum()),**connections)
+                paper_contour_rgb_pixels=int(boundary.sum()),new_subject_splits=int(new_splits),**connections)
     return prepared,candidate,info
