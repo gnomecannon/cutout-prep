@@ -1,8 +1,9 @@
 """Local, pinned object segmentation with bounded edge refinement.
 
 No remote code, inference service or automatic model download is used. Supplied
-alpha/masks bypass this module in the image reader. RGB is changed only where a
-fractional boundary is sufficiently supported by nearby foreground/background.
+alpha/masks bypass this module in the image reader. Solid-object refinement
+protects captured interiors. A conditional fine-paper route can clean opaque
+backing errors and contour color while recovering source-supported stems.
 """
 from __future__ import annotations
 
@@ -260,26 +261,41 @@ def extract(rgba, backend=None):
     scale=min(1.,2048/max(h,w));size=(max(2,round(w*scale)),max(2,round(h*scale)))
     small=cv2.resize(rgb,size,interpolation=cv2.INTER_AREA) if scale<1 else rgb
     prior=np.clip(cv2.resize(raw,size,interpolation=cv2.INTER_LINEAR),0,1)
+    original_prior=prior.copy()
     prior,ceiling,fine_evidence=fine_structure(small,prior,backend)
     color,alpha,evidence=refine(small,prior,coverage_ceiling=ceiling)
     evidence.update(fine_evidence)
     if ceiling is not None:
-        color,alpha,edge_evidence=finish_paper_edges(small,color,alpha,fine_evidence['paper_background_rgb'])
-        evidence.update(edge_evidence)
-        evidence['edge_rgb_pixels']+=edge_evidence['paper_edge_rgb_pixels']
+        from . import paper_foliage
+        color,alpha,paper_evidence=paper_foliage.refine(small,original_prior,color,alpha,fine_evidence['paper_background_rgb'])
+        evidence.update(paper_evidence)
+        if paper_evidence['paper_foliage_applied']:
+            evidence['edge_rgb_pixels']=paper_evidence['paper_contour_rgb_pixels']
+        else:
+            color,alpha,edge_evidence=finish_paper_edges(small,color,alpha,fine_evidence['paper_background_rgb'])
+            evidence.update(edge_evidence)
+            evidence['edge_rgb_pixels']+=edge_evidence['paper_edge_rgb_pixels']
     if not (alpha>=128).any():raise ValueError('Detailed cutout found no usable foreground')
     result=rgba.copy()
     result[:,:,3]=np.asarray(Image.fromarray(alpha).resize((w,h),Image.Resampling.LANCZOS)) if scale<1 else alpha
     if evidence['edge_rgb_pixels']:
         corrected=cv2.resize(color,(w,h),interpolation=cv2.INTER_LINEAR) if scale<1 else color
-        # At capture resolution restrict RGB changes to fractional coverage.
-        fractional=(result[:,:,3]>0)&(result[:,:,3]<250)
-        result[fractional,:3]=corrected[fractional]
+        # The conditional paper route also decontaminates opaque contour
+        # pixels. Deep captured tissue stays unchanged in that route.
+        if evidence.get('paper_foliage_applied'):
+            changed=np.any(color!=small,axis=2).astype(np.uint8)
+            if scale<1:changed=cv2.resize(changed,(w,h),interpolation=cv2.INTER_NEAREST)
+            changed=changed.astype(bool)&(result[:,:,3]>0)
+        else:
+            changed=(result[:,:,3]>0)&(result[:,:,3]<250)
+        result[changed,:3]=corrected[changed]
     warnings=['Automatic detailed cutout: inspect the preview before game use']
     if evidence['dark_backing_recovery']:warnings.append('Fine material recovered from uniform dark backing after incomplete object prediction; inspect holes and small pieces')
+    if evidence.get('stems_recovered'):warnings.append('Narrow stems recovered from the source photo; inspect their connections')
+    if evidence.get('uncertain_connections'):warnings.append('Some narrow connections remain uncertain; inspect small branches before using this cutout')
     boundary=np.concatenate([alpha[0],alpha[-1],alpha[:,0],alpha[:,-1]])
     if np.any(boundary>127):warnings.append('Subject approaches photograph edge: check capture coverage')
-    return result,{'method':'local BiRefNet Lite segmentation and topology-preserving edge refinement',
+    return result,{'method':'local BiRefNet Lite segmentation and source-guided edge refinement',
                    'model_sha256':MODEL_SHA256,'runtime_version':backend.runtime_version,'working_long_edge':max(small.shape[:2]),
                    'edge_colors_prepared':True,'subject_fraction':float((alpha>=128).mean()),
                    **evidence,'review_required':True,'warnings':warnings}

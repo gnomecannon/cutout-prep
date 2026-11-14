@@ -457,7 +457,7 @@ def run(args):
             raise ValueError('Malformed owned-output record; preserving existing output directory')
     profile_path=Path(__file__).with_name('sRGB.icc');profile=profile_path.read_bytes()
     environment=environment_provenance()
-    processor=digest(Path(__file__).read_bytes()+Path(__file__).with_name('__init__.py').read_bytes()+Path(__file__).with_name('auto_cutout.py').read_bytes()+Path(__file__).with_name('neural_cutout.py').read_bytes()+Path(__file__).with_name('raw_decode.py').read_bytes()+Path(__file__).with_name('color_adjust.py').read_bytes()+Path(__file__).with_name('dng_profile.py').read_bytes()+Path(__file__).with_name('tone_normalize.py').read_bytes()+Path(__file__).with_name('pair_alignment.py').read_bytes()+profile+json_hash(environment).encode())
+    processor=digest(Path(__file__).read_bytes()+Path(__file__).with_name('__init__.py').read_bytes()+Path(__file__).with_name('auto_cutout.py').read_bytes()+Path(__file__).with_name('neural_cutout.py').read_bytes()+Path(__file__).with_name('paper_foliage.py').read_bytes()+Path(__file__).with_name('raw_decode.py').read_bytes()+Path(__file__).with_name('color_adjust.py').read_bytes()+Path(__file__).with_name('dng_profile.py').read_bytes()+Path(__file__).with_name('tone_normalize.py').read_bytes()+Path(__file__).with_name('pair_alignment.py').read_bytes()+profile+json_hash(environment).encode())
     for name,record in outputs.items():
         pixel_key=record.get('pixel_key');path=output/name
         if not pixel_key or not path.is_file():continue

@@ -3,6 +3,7 @@ include *.cmd
 recursive-include docs *.md *.json *.jpg *.png
 recursive-include examples *.py *.md *.png *.jpg
 recursive-include tests *.py
+recursive-include tests/fixtures *.md *.jpg *.png
 
 include requirements-desktop.txt
 recursive-include tools *.py *.sh *.json SAM2-LICENSE BiRefNet-LICENSE

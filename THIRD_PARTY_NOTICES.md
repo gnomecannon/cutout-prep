@@ -69,3 +69,12 @@ Python code is downloaded or executed by the app.
 ONNX Runtime is provided under the MIT License. Its license and dependency
 notices are collected with the other runtime licenses in portable builds.
 CPU inference runs locally; there is no image upload or paid inference service.
+## Real-photo regression fixture
+
+The source distribution's `tests/fixtures/fern-paper` includes
+`Fern-leaf-oliv.jpg` by Olegivvit (assumed author attribution in the
+[Wikimedia Commons source](https://commons.wikimedia.org/wiki/File:Fern-leaf-oliv.jpg)).
+The photograph and derived masks use [CC BY 2.5](https://creativecommons.org/licenses/by/2.5/),
+separately from the application's MIT code license. Background/shadow removal,
+mask correction and source-supported stem recovery are described in the fixture
+README. The portable application does not need or bundle these test images.
