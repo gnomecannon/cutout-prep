@@ -66,6 +66,43 @@ It adds no model inference or user steps. Fine pale detail still needs review.
 
 ## Real-photo evidence and limits
 
+### Approved fern reference: 0.5
+
+The earlier bright-white pixel counts missed gray and green-tinted backing and
+did not detect a detached stem. They are retained as historical measurements,
+not visual acceptance criteria. The corrected fern was reviewed and accepted
+after those failures were repaired.
+
+Qualifying fine colorful subjects now receive source-color cleanup inside the
+silhouette as well as at its edges. Saturation is considered relative to
+brightness, so a dark green stem is not discarded merely for having low absolute
+chroma. Enclosed backing pockets are not automatically filled. Their contaminated
+inner rims are cleaned, and nearby captured tissue supplies contour colors.
+Deep retained tissue keeps its original RGB.
+
+Short broken connections can be recovered only along photographic color evidence
+inside the original subject prediction. Separate source components keep their
+own anchors; this does not join separate objects into one. Recovery distance,
+iterations and changed coverage are bounded. Ambiguous connections produce a
+review warning rather than an invented straight bridge. A sizeable pale region
+or a predominantly pale subject skips this route.
+New significant pieces split from an original predicted subject are also
+flagged when source color cannot support their reconnection.
+
+The offline real-photo test uses a recorded model prior and a separately reviewed
+accepted mask. At native 1952 × 1470 resolution, the automatic refinement has
+about 99.2% mask overlap with that accepted example. This measures agreement with
+one artist-reviewed cutout, not independently annotated accuracy or performance
+on other photographs. No reference image, specimen coordinates or filenames are
+consulted by the extraction algorithm.
+
+`tools/check_fern_quality.py --app APP --output NEW_FOLDER` runs the actual
+packaged photo worker, checks the reference after the recorded framing transform,
+and produces black, magenta and white review views. Portable runtime validation
+includes this check. The fixture's [source and license](../tests/fixtures/fern-paper/README.md)
+travel with the source distribution. Model weights are not needed for the
+recorded-prior unit tests.
+
 The [pinned online cases](REAL_PHOTO_TESTS.md) preserve the v0.3 baseline. Direct
 comparisons showed substantially less backing inside fern branches, recovered
 feather detail, a solid rock mask without glint holes, and correct leaf selection

@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.5.0 — clean paper gaps and connected stems
+
+- Clean gray and tinted backing inside fine colorful subjects on measured
+  neutral paper, including pockets the model incorrectly marked opaque.
+- Keep dark stems using relative color evidence, then recover short connections
+  supported by the original photograph. Separate source subjects stay separate;
+  uncertain connections are flagged rather than joined across blank paper.
+- Decontaminate contour colors while preserving captured interior color. Pale
+  subjects, sizeable pale tissue, solid-object highlights, supplied transparency
+  and explicit masks retain their protected routes.
+- Add the approved real-photo fern mask as an offline regression reference and
+  test actual packaged output against it on Windows and Apple Silicon Mac.
+  The normal folder/process workflow and local dependencies are unchanged.
+
 ## 0.4.2 — fractional paper-edge finishing
 
 - Finish small partly transparent paper rims after the conditional fine-subject

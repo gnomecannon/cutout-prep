@@ -64,6 +64,12 @@ there is no blanket hole filling. **Keep separate objects and small pieces** is
 enabled by default. Several separate subjects keep their photographed orientation.
 Per-photo component choices and supplied alpha/masks retain their priority.
 
+Fine colorful foliage on measured neutral paper also receives cleanup inside
+small gaps, including gray or tinted backing. Dark stems use relative color
+evidence, with bounded recovery of connections supported by the source. Large
+pale tissue regions skip this pass. Check the connection warnings and preview;
+the approved fern regression does not establish accuracy on every subject.
+
 **More options → Background removal method → Simple background (older method)**
 selects the previous extractor. Its interior protection restores enclosed
 tissue when the photograph does not support a paper-colored hole, while retaining

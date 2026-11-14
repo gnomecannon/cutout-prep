@@ -164,7 +164,21 @@ can remain. The foreground model analyzes a 1024-pixel square and bounded edge
 refinement cannot restore arbitrary detail below its analysis scale. The scan
 workflow and reconstruction/material limitations are unchanged.
 
-## Version 0.4.1 fern correction
+## Version 0.5 approved fern reference
+
+The earlier white-pixel proxy below missed gray/tinted remnants and a broken
+connection. The subsequent corrected fern was visually accepted. Its alpha is
+now an independent regression reference for the automatic source-color cleanup
+and connection recovery, replacing proxy counts as the fern quality check.
+
+The recorded-prior native-resolution check has about 99.2% intersection-over-union
+with the accepted mask and retains more than 99.5% of its foreground. It also
+checks actual backing holes, captured interior RGB and detached fronds. This is
+agreement with one reviewed sample, not general photogrammetry/cutout accuracy.
+See [the reference and license](../tests/fixtures/fern-paper/README.md) and
+[packaged validation](2D_MASKING.md#approved-fern-reference-05).
+
+## Version 0.4.1 fern correction (historical)
 
 The fern's retained white spots prompted a conditional close-view pass, rather
 than treating the first 0.4 output as accepted. Four overlapping predictions

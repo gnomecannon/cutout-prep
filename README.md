@@ -61,6 +61,13 @@ leaflets. It does not apply a general white-color deletion rule.
 Version 0.4.2 adds a finishing pass for the remaining fractional paper rims,
 preserving near-opaque captured material and the same simple workflow.
 
+Version 0.5 also removes gray and tinted paper inside small leaflet gaps and
+recovers narrow stems supported by the source photograph. This conditional pass
+uses an approved real-photo fern as a regression reference; it has no per-fern
+coordinates or special filename rule. Pale subjects and uncertain material
+remain protected. Inspect the result and its connection warnings; this does not
+guarantee the same quality on every background. [Quality checks](docs/2D_MASKING.md).
+
 ## AI development disclosure
 
 AI generated the original application code and tests under human requirements,

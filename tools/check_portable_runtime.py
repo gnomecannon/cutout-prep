@@ -1,5 +1,5 @@
 """Validate both frozen workflows, including source-file provenance resources."""
-import argparse,json,os,subprocess
+import argparse,json,os,subprocess,sys
 from pathlib import Path
 import numpy as np
 from PIL import Image
@@ -42,7 +42,10 @@ def main():
     detail=json.loads((output/'Detailed/ProcessingReport.json').read_text());assert detail['counts'].get('processed')==1,detail['files']
     expected=json.loads(Path(__file__).with_name('cutout-model-manifest.json').read_text())['files']['model.onnx']['sha256']
     assert detail['files'][0]['cutout']['model_sha256']==expected
+    subprocess.run([sys.executable,str(Path(__file__).with_name('check_fern_quality.py')),
+                    '--app',str(app),'--output',str(output/'Real Fern')],check=True)
     result={'ok':True,'frozen_image_and_tracking':True,'frozen_leaf_outputs':2,'frozen_leaf_pairs':1,'frozen_leaf_holes_preserved':2,'frozen_detailed_backend':True,'leaf_fixture':'procedural lobed leaf, narrow stem and irregular holes; dependency/workflow check, not a real-photo accuracy test','source_provenance_resources_verified':True}
+    result['frozen_approved_fern_reference']=True
     (output/'Portable Verification.json').write_text(json.dumps(result,indent=2)+'\n');print(json.dumps(result))
 
 
